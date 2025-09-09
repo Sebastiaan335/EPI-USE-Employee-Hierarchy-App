@@ -1,15 +1,27 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL") // pooled (runtime)
+  //directUrl = env("DIRECT_URL")  // direct (migrations)
+}
+
+
+model Employee {
+  id             String     @id @default(uuid())
+  employeeNumber String     @unique
+  firstName      String
+  lastName       String
+  birthDate      DateTime
+  email          String?    @unique
+  salary         Decimal    @db.Decimal(12, 2)
+  role           String
+  managerId      String?    @db.Uuid
+  manager        Employee?  @relation("Subordinates", fields: [managerId], references: [id])
+  subordinates   Employee[] @relation("Subordinates")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 }
