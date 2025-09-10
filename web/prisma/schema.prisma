@@ -1,27 +1,25 @@
 // prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") // pooled (runtime)
-  //directUrl = env("DIRECT_URL")  // direct (migrations)
+  url      = env("DATABASE_URL")
 }
 
-
 model Employee {
-  id             String     @id @default(uuid())
-  employeeNumber String     @unique
-  firstName      String
-  lastName       String
-  birthDate      DateTime
-  email          String?    @unique
-  salary         Decimal    @db.Decimal(12, 2)
-  role           String
-  managerId      String?    @db.Uuid
-  manager        Employee?  @relation("Subordinates", fields: [managerId], references: [id])
-  subordinates   Employee[] @relation("Subordinates")
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id           Int        @id @default(autoincrement())
+  firstName    String
+  lastName     String
+  birthDate    DateTime
+  employeeNumber String   @unique
+  salary       Float
+  role         String
+
+  // self-referencing manager relation
+  managerId Int?
+  manager   Employee?   @relation("ManagerReports", fields: [managerId], references: [id])
+  reports   Employee[]  @relation("ManagerReports")
 }
