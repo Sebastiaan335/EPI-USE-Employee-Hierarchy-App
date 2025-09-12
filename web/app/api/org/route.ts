@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../../../lib/prisma";
 
 type OrgNode = { id: string; label: string; role?: string };
 type OrgEdge = { id: string; source: string; target: string };

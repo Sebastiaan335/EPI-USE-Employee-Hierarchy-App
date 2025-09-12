@@ -11,7 +11,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Input } from "@/components/ui/input"; // or replace with a plain <input>
-import { getGravatarUrl } from "@/lib/gravatar";
+import { getGravatarUrl } from "../../../lib/gravatar";
 
 type Employee = {
   id: number;
