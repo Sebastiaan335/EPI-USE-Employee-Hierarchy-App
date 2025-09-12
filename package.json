@@ -1,6 +1,12 @@
 {
   "devDependencies": {
     "@prisma/client": "^6.16.0",
+    "@types/dagre": "^0.7.53",
     "prisma": "^6.16.0"
+  },
+  "dependencies": {
+    "@tanstack/react-table": "^8.21.3",
+    "dagre": "^0.8.5",
+    "reactflow": "^11.11.4"
   }
 }
