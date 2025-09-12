@@ -10,7 +10,7 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { Input } from "@/components/ui/input";
+import { Input } from "../../components/ui/input";
 import { getGravatarUrl } from "../../lib/gravatar";
 
 type Employee = {

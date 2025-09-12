@@ -75,18 +75,34 @@ export async function GET() {
     }
 
     // Build React Flow nodes/edges (positions will be computed client-side)
-    const nodes: OrgNode[] = employees.map((e) => ({
+    interface Employee {
+      id: string | number;
+      firstName: string;
+      lastName: string;
+      role?: string | null;
+      managerId?: string | number | null;
+    }
+
+    const nodes: OrgNode[] = employees.map((e: Employee): OrgNode => ({
       id: String(e.id),
       label: `${e.firstName} ${e.lastName}`,
       role: e.role ?? undefined,
     }));
 
-    const edges: OrgEdge[] = employees
-      .filter((e) => e.managerId != null)
-      .map((e) => ({
-        id: `${e.managerId}-${e.id}`,
-        source: String(e.managerId),
-        target: String(e.id),
+    interface EmployeeWithManager {
+      id: string | number;
+      firstName: string;
+      lastName: string;
+      role?: string | null;
+      managerId?: string | number | null;
+    }
+
+    const edges: OrgEdge[] = (employees as EmployeeWithManager[])
+      .filter((e: EmployeeWithManager) => e.managerId != null)
+      .map((e: EmployeeWithManager): OrgEdge => ({
+      id: `${e.managerId}-${e.id}`,
+      source: String(e.managerId),
+      target: String(e.id),
       }));
 
     return NextResponse.json({ nodes, edges });
