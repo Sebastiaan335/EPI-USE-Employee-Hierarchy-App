@@ -10,7 +10,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model Employee {
+model employee {
   id           Int     @id @default(autoincrement())
   name    String
   surname     String
@@ -22,6 +22,6 @@ model Employee {
 
   // self-referencing manager relation
   managerId Int?
-  manager   Employee?   @relation("EmployeeManager", fields: [managerId], references: [id])
-  reports   Employee[]  @relation("EmployeeManager")
+  manager   employee?   @relation("EmployeeManager", fields: [managerId], references: [id])
+  reports   employee[]  @relation("EmployeeManager")
 }
