@@ -7,7 +7,7 @@ type OrgEdge = { id: number; source: number; target: number };
 export async function GET() {
   try {
     const employees = await prisma.employee.findMany({
-      select: { id: true, firstName: true, lastName: true, role: true, managerId: true },
+      select: { id: true, name: true, surname: true, role: true, managerId: true },
       orderBy: { id: "asc" },
     });
 
@@ -77,22 +77,22 @@ export async function GET() {
     // Build React Flow nodes/edges (positions will be computed client-side)
     interface Employee {
       id: string | number;
-      firstName: string;
-      lastName: string;
+      name: string;
+      surname: string;
       role?: string | null;
       managerId?: string | number | null;
     }
 
     const nodes: OrgNode[] = employees.map((e: Employee): OrgNode => ({
       id: Number(e.id),
-      label: `${e.firstName} ${e.lastName}`,
+      label: `${e.name} ${e.surname}`,
       role: e.role ?? undefined,
     }));
 
     interface EmployeeWithManager {
       id: string | number;
-      firstName: string;
-      lastName: string;
+      name: string;
+      surname: string;
       role?: string | null;
       managerId?: string | number | null;
     }
