@@ -36,6 +36,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@next/font": "^14.2.15",
     "@tanstack/react-table": "^8.21.3",
     "clsx": "^2.1.1",
     "dagre": "^0.8.5",
