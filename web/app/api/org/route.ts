@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 
-type OrgNode = { id: string; label: string; role?: string };
-type OrgEdge = { id: string; source: string; target: string };
+type OrgNode = { id: number; label: string; role?: string };
+type OrgEdge = { id: number; source: number; target: number };
 
 export async function GET() {
   try {
@@ -84,7 +84,7 @@ export async function GET() {
     }
 
     const nodes: OrgNode[] = employees.map((e: Employee): OrgNode => ({
-      id: String(e.id),
+      id: Number(e.id),
       label: `${e.firstName} ${e.lastName}`,
       role: e.role ?? undefined,
     }));
@@ -100,9 +100,9 @@ export async function GET() {
     const edges: OrgEdge[] = (employees as EmployeeWithManager[])
       .filter((e: EmployeeWithManager) => e.managerId != null)
       .map((e: EmployeeWithManager): OrgEdge => ({
-      id: `${e.managerId}-${e.id}`,
-      source: String(e.managerId),
-      target: String(e.id),
+      id: Number(e.managerId),
+      source: Number(e.managerId),
+      target: Number(e.id),
       }));
 
     return NextResponse.json({ nodes, edges });
