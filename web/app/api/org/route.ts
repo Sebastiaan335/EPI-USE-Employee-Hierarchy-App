@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+export const dynamic = "force-dynamic";
 
 type OrgNode = { id: number; label: string; role?: string };
 type OrgEdge = { id: number; source: number; target: number };
