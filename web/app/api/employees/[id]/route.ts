@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../../lib/prisma';
 
-type Params = { params: { id: number } };
+type Params = { params: { id: string } };
 
 export async function GET(_: Request, { params }: Params) {
   try {
     const employee = await prisma.employee.findUnique({
-      where: { id: params.id },
+      where: { id: Number(params.id) },
       include: { manager: true },
     });
     if (!employee) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -20,7 +20,7 @@ export async function PUT(req: Request, { params }: Params) {
   try {
     const data = await req.json();
     const updated = await prisma.employee.update({
-      where: { id: params.id },
+      where: { id: Number(params.id) },
       data,
     });
     return NextResponse.json(updated);
@@ -31,7 +31,7 @@ export async function PUT(req: Request, { params }: Params) {
 
 export async function DELETE(_: Request, { params }: Params) {
   try {
-    await prisma.employee.delete({ where: { id: params.id } });
+    await prisma.employee.delete({ where: { id: Number(params.id) } });
     return NextResponse.json({ message: 'Deleted' });
   } catch {
     return NextResponse.json({ error: 'Failed to delete employee' }, { status: 500 });
