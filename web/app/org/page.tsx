@@ -181,7 +181,7 @@ const OrgChartPage: React.FC = () => {
                 (edge.sections || []).map((section, idx) => (
                   <polyline
                     key={edge.id + idx}
-                    points={section.points.map((p: any) => `${p.x},${p.y}`).join(" ")}
+                    points={(section.points || []).map((p: any) => `${p.x},${p.y}`).join(" ")}
                     fill="none"
                     stroke="#9ca3af"
                     strokeWidth={2}
