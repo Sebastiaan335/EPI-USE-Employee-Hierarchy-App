@@ -65,6 +65,7 @@ const OrgChartPage: React.FC = () => {
       layoutOptions: {
         "elk.algorithm": "layered",
         "elk.direction": "DOWN",
+        "elk.edgeRouting": "ORTHOGONAL",
         "elk.layered.spacing.nodeNodeBetweenLayers": "80",
         "elk.spacing.nodeNode": "40",
       },
@@ -204,13 +205,13 @@ const OrgChartPage: React.FC = () => {
             {/* Edges */}
             <svg style={{ position: "absolute", left: 0, top: 0, width: bounds.width, height: bounds.height }}
             viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}>
-              {(edges || []).map((edge) =>
+              {edges.map((edge) =>
                 (edge.sections || []).map((section, idx) => (
                   <polyline
                     key={edge.id + idx}
                     points={(section.points || []).map((p: any) => `${p.x},${p.y}`).join(" ")}
                     fill="none"
-                    stroke="#9ca3af"
+                    stroke="#dd533bff"
                     strokeWidth={2}
                   />
                 ))
