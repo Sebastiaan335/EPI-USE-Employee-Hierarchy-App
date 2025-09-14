@@ -17,7 +17,7 @@ model employee {
   email           String      @unique @db.VarChar(255)
   salary          Decimal     @db.Decimal(12, 2)
   role            String      @db.VarChar(100)
-  managerid       Int?
+  managerId       Int?
   manager       employee?  @relation("employeesToemployees", fields: [managerid], references: [id], onUpdate: NoAction, map: "fk_manager")
   other_employees employee[] @relation("employeesToemployees")
 
