@@ -8,7 +8,7 @@ type OrgEdge = { id: number; source: number; target: number };
 export async function GET() {
   try {
     const employees = await prisma.employees.findMany({
-      select: { id: true, name: true, surname: true, role: true, managerId: true },
+      select: { id: true, name: true, surname: true, role: true, managerid: true },
       orderBy: { id: "asc" },
     });
 
@@ -17,9 +17,9 @@ export async function GET() {
     const ids = new Set<string>();
     for (const e of employees) {
       ids.add(String(e.id));
-      if (e.managerId != null) {
-        if (!adj.has(String(e.managerId))) adj.set(String(e.managerId), []);
-        adj.get(String(e.managerId))!.push(String(e.id));
+      if (e.managerid != null) {
+        if (!adj.has(String(e.managerid))) adj.set(String(e.managerid), []);
+        adj.get(String(e.managerid))!.push(String(e.id));
       }
       if (!adj.has(String(e.id))) adj.set(String(e.id), []);
     }
@@ -81,7 +81,7 @@ export async function GET() {
       name: string;
       surname: string;
       role?: string | null;
-      managerId?: string | number | null;
+      managerid?: string | number | null;
     }
 
     const nodes: OrgNode[] = employees.map((e: Employee): OrgNode => ({
@@ -95,14 +95,14 @@ export async function GET() {
       name: string;
       surname: string;
       role?: string | null;
-      managerId?: string | number | null;
+      managerid?: string | number | null;
     }
 
     const edges: OrgEdge[] = (employees as EmployeeWithManager[])
-      .filter((e: EmployeeWithManager) => e.managerId != null)
+      .filter((e: EmployeeWithManager) => e.managerid != null)
       .map((e: EmployeeWithManager): OrgEdge => ({
-      id: Number(e.managerId),
-      source: Number(e.managerId),
+      id: Number(e.managerid),
+      source: Number(e.managerid),
       target: Number(e.id),
       }));
 
