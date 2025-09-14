@@ -35,7 +35,7 @@ const Home: React.FC = () => {
       .then((data) => {
         const totalEmployees = data.length;
         const totalManagers = data.filter((e: any) =>
-          data.some((r: any) => r.managerId === e.id)
+          data.some((r: any) => r.managerid === e.id)
         ).length;
         const avgSalary =
           totalEmployees > 0

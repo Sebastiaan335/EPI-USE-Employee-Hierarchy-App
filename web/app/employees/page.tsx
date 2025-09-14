@@ -22,7 +22,7 @@ interface Employee {
   birthdate: string;
   salary: number;
   role: string;
-  managerId?: number | null;
+  managerid?: number | null;
   email: string;
 }
 
@@ -79,9 +79,9 @@ const EmployeesPage: React.FC = () => {
     }
   };
 
-  const getManagerName = (managerId?: number | null) => {
-    if (!managerId) return "No Manager";
-    const manager = employees.find((emp) => emp.id === managerId);
+  const getManagerName = (managerid?: number | null) => {
+    if (!managerid) return "No Manager";
+    const manager = employees.find((emp) => emp.id === managerid);
     return manager ? `${manager.name} ${manager.surname}` : "Unknown";
   };
 
@@ -240,7 +240,7 @@ const EmployeesPage: React.FC = () => {
                   </td>
                   <td>{formatCurrency(employee.salary)}</td>
                   <td>{formatDate(employee.birthdate)}</td>
-                  <td>{getManagerName(employee.managerId)}</td>
+                  <td>{getManagerName(employee.managerid)}</td>
                   <td>
                     <div className="flex gap-2">
                       <button
@@ -337,11 +337,11 @@ const EmployeesPage: React.FC = () => {
                 />
                 <select
                   className="form-select"
-                  value={formData.managerId ?? ""}
+                  value={formData.managerid ?? ""}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      managerId: e.target.value ? Number(e.target.value) : null,
+                      managerid: e.target.value ? Number(e.target.value) : null,
                     })
                   }
                 >
