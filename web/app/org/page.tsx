@@ -84,25 +84,8 @@ const OrgChartPage: React.FC = () => {
         })),
     };
 
-    elk.layout(graph).then((layout) => {
+    elk.layout(graph).then((layout: any) => {
       console.log("ELK layout", layout);
-      const children = layout.children || [];
-      const edges = layout.edges || [];
-
-      // Compute bounding box
-      const xs = children.map((n: any) => n.x);
-      const ys = children.map((n: any) => n.y);
-      const maxXs = children.map((n: any) => n.x + n.width);
-      const maxYs = children.map((n: any) => n.y + n.height);
-
-      const minX = xs.length ? Math.min(...xs) : 0;
-      const minY = ys.length ? Math.min(...ys) : 0;
-      const maxX = maxXs.length ? Math.max(...maxXs) : 0;
-      const maxY = maxYs.length ? Math.max(...maxYs) : 0;
-
-
-      const width = maxX - minX + 200; // padding
-      const height = maxY - minY + 200;
 
       setNodes(
         (layout.children || []).map((n: any) => ({
@@ -119,7 +102,7 @@ const OrgChartPage: React.FC = () => {
           sections: edge.sections || [],
         }))
       );
-      setBounds({ minX, minY, maxX, maxY, width, height });
+      setBounds({minX: 0, minY: 0, maxX: layout.width, maxY: layout.height, width: layout.width, height: layout.height, });
     });
   }, [employees]);
 
@@ -209,7 +192,9 @@ const OrgChartPage: React.FC = () => {
             }}
           >
             {/* Edges */}
-            <svg style={{ position: "absolute", left: 0, top: 0, width: bounds.width, height: bounds.height }}
+            <svg style={{ position: "absolute", left: 0, top: 0 }}
+            width={bounds.width}
+            height={bounds.height}
             viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}>
               {edges.map((edge) =>
                 (edge.sections || []).map((section, idx) => (
