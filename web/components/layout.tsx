@@ -1,5 +1,6 @@
 import React from 'react';
 import { Building2, Users, BarChart3, Home, Mail, Phone, MapPin } from 'lucide-react';
+import Link from "next/link";
 import '../app/global.css';
 
 interface LayoutProps {
@@ -10,8 +11,8 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children, currentPage = 'home' }) => {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home, current: currentPage === 'home' },
-    { name: 'Employees', href: '../app/employees', icon: Users, current: currentPage === 'employees' },
-    { name: 'Org Chart', href: '../app/org', icon: BarChart3, current: currentPage === 'orgchart' },
+    { name: 'Employees', href: '/employees', icon: Users, current: currentPage === 'employees' },
+    { name: 'Org Chart', href: '/org', icon: BarChart3, current: currentPage === 'orgchart' },
   ];
 
   const handleNavClick = (href: string) => {
@@ -25,10 +26,10 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPage = 'home' }) => {
       {/* Header */}
       <header className="header">
         <div className="header-content">
-          <a href="/" className="header-brand" onClick={(e) => { e.preventDefault(); handleNavClick('/'); }}>
+          <Link href="/" className="header-brand" onClick={(e) => { e.preventDefault(); handleNavClick('/'); }}>
             <Building2 size={32} />
             <span>EPI-USE Africa</span>
-          </a>
+          </Link>
           
           <nav>
             <ul className="header-nav">
@@ -36,17 +37,12 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPage = 'home' }) => {
                 const Icon = item.icon;
                 return (
                   <li key={item.name}>
-                    <a
+                    <Link
                       href={item.href}
-                      className={item.current ? 'active' : ''}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleNavClick(item.href);
-                      }}
-                    >
+                      className={item.current ? 'active' : ''}>
                       <Icon size={18} />
                       <span className="hidden-sm">{item.name}</span>
-                    </a>
+                    </Link>
                   </li>
                 );
               })}
