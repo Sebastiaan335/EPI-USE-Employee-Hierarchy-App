@@ -84,7 +84,7 @@ const OrgChartPage: React.FC = () => {
 
     elk.layout(graph).then((layout) => {
       setNodes(
-        layout.children!.map((n: any) => ({
+        (layout.children || []).map((n: any) => ({
           ...(n.emp as Employee),
           x: n.x,
           y: n.y,
@@ -92,7 +92,12 @@ const OrgChartPage: React.FC = () => {
           height: n.height,
         }))
       );
-      setEdges(layout.edges || []);
+      setEdges(
+        (layout.edges || []).map((edge: any) => ({
+          id: edge.id,
+          sections: edge.sections || [],
+        }))
+      );
     });
   }, [employees]);
 
