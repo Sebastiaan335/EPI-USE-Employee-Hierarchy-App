@@ -102,10 +102,13 @@ const OrgChartPage: React.FC = () => {
         (layout.edges || []).map((edge: any) => ({
           id: edge.id,
           sections: (edge.sections || []).map((s: any) => ({
-            points: s.points,
+            startPoint: s.startPoint,
+            endPoint: s.endPoint,
+            bendPoints: s.bendPoints || [],
           })),
         }))
       );
+
       setBounds({minX: 0, minY: 0, maxX: layout.width, maxY: layout.height, width: layout.width, height: layout.height, });
 
       console.log("Edge[0] points:", layout.edges[0].sections[0].points);
