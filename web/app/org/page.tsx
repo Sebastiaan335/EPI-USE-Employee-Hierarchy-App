@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Layout from "../../components/layout";
 import { getGravatarUrl } from "../../lib/gravatar";
-import ELK from "elkjs/lib/elk.bundled.js";
+import ELK from "elkjs";
 
 interface Employee {
   id: number;
