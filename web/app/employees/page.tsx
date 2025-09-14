@@ -52,13 +52,21 @@ const EmployeesPage: React.FC = () => {
   // Handle add
   const handleAdd = async () => {
     try {
+      const payload = {
+        ...formData,
+        // Ensure correct ISO format
+        birthdate: formData.birthdate
+          ? new Date(formData.birthdate).toISOString() : null,
+      };
+
       const res = await fetch("/api/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        alert("Failed to add employee");
+        const errText = await res.text();
+        alert("Failed to add employee: " + errText);
         return;
       }
       const newEmp = await res.json();
