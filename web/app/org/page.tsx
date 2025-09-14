@@ -42,6 +42,7 @@ const OrgChartPage: React.FC = () => {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const lastPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [bounds, setBounds] = useState({ minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0 });
 
   const chartRef = useRef<HTMLDivElement>(null);
 
@@ -83,6 +84,18 @@ const OrgChartPage: React.FC = () => {
     };
 
     elk.layout(graph).then((layout) => {
+      const children = layout.children || [];
+      const edges = layout.edges || [];
+
+      // Compute bounding box
+      const minX = Math.min(...children.map((n: any) => n.x));
+      const minY = Math.min(...children.map((n: any) => n.y));
+      const maxX = Math.max(...children.map((n: any) => n.x + n.width));
+      const maxY = Math.max(...children.map((n: any) => n.y + n.height));
+
+      const width = maxX - minX + 200; // padding
+      const height = maxY - minY + 200;
+
       setNodes(
         (layout.children || []).map((n: any) => ({
           ...(n.emp as Employee),
@@ -98,6 +111,7 @@ const OrgChartPage: React.FC = () => {
           sections: edge.sections || [],
         }))
       );
+      setBounds({ minX, minY, maxX, maxY, width, height });
     });
   }, [employees]);
 
@@ -114,8 +128,22 @@ const OrgChartPage: React.FC = () => {
   const handleZoom = (direction: "in" | "out" | "reset") => {
     if (direction === "in") setZoomLevel((z) => Math.min(z * 1.2, 3));
     if (direction === "out") setZoomLevel((z) => Math.max(z / 1.2, 0.5));
-    if (direction === "reset") setZoomLevel(1);
+    if (direction === "reset") handleReset();
   };
+
+  const handleReset = () => {
+    setZoomLevel(1);
+    if (bounds.width && bounds.height && chartRef.current) {
+      const { clientWidth, clientHeight } = chartRef.current;
+      setPan({
+        x: clientWidth / 2 - bounds.width / 2,
+        y: 50, // some padding from top
+      });
+    } else {
+      setPan({ x: 0, y: 0 });
+    }
+  };
+
 
   // Panning handlers
   const onMouseDown = (e: React.MouseEvent) => {
@@ -171,12 +199,11 @@ const OrgChartPage: React.FC = () => {
               transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})`,
               transformOrigin: "top left",
               position: "relative",
-              width: "100%",
-              height: "100%",
             }}
           >
             {/* Edges */}
-            <svg style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%" }}>
+            <svg style={{ position: "absolute", left: 0, top: 0, width: bounds.width, height: bounds.height }}
+            viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}>
               {(edges || []).map((edge) =>
                 (edge.sections || []).map((section, idx) => (
                   <polyline
