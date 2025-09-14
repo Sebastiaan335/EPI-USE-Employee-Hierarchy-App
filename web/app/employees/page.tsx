@@ -11,7 +11,7 @@ import {
   ChevronDown,
   User,
 } from "lucide-react";
-import Layout from "../../components/ui/layout";
+import Layout from "../../components/layout";
 import { getGravatarUrl } from "../../lib/gravatar";
 
 interface Employee {
