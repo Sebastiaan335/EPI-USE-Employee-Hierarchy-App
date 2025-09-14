@@ -8,7 +8,7 @@ export async function GET(req: Request) {
 
   if (id) {
     try {
-    const employee = await prisma.employees.findUnique({
+    const employee = await prisma.employee.findUnique({
       where: { id: Number(id) },
       include: { manager: true },
     });
@@ -21,7 +21,7 @@ export async function GET(req: Request) {
 
   // otherwise: list all employees
   try {
-    const employees = await prisma.employees.findMany({
+    const employees = await prisma.employee.findMany({
       include: { manager: true },
     });
     return NextResponse.json(employees);
@@ -33,7 +33,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const data = await req.json();
-    const newEmployee = await prisma.employees.create({ data });
+    const newEmployee = await prisma.employee.create({ data });
     return NextResponse.json(newEmployee, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: 'Failed to create employee' }, { status: 500 });
@@ -45,7 +45,7 @@ export async function PUT(req: Request) {
     const { searchParams } = new URL(req.url);
     const id = Number(searchParams.get("id"));
     const data = await req.json();
-    const updated = await prisma.employees.update({where: { id }, data });
+    const updated = await prisma.employee.update({where: { id }, data });
     return NextResponse.json(updated);
   } catch {
     return NextResponse.json({ error: 'Failed to update employee' }, { status: 500 });
