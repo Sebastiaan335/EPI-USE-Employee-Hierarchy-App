@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useMemo } from 'react';
 import { Search, Filter, Plus, Edit, Trash2, ChevronUp, ChevronDown, User } from 'lucide-react';
 import { createHash } from 'crypto';
