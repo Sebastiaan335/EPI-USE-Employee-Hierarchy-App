@@ -1,3 +1,5 @@
+"use client";
+
 import Employees, { Employee } from "../../components/ui/Employees";
 
 // This is a SERVER component by default
