@@ -1,76 +1,103 @@
-import "./globals.css";
-import { Inter } from "next/font/google";
-import { ReactNode } from "react";
-import Link from "next/link";
-import { Menu } from "lucide-react";
+import React from 'react';
+import { Building2, Users, BarChart3, Home, Mail, Phone, MapPin } from 'lucide-react';
+import './global.css';
 
-const inter = Inter({ subsets: ["latin"] });
+interface LayoutProps {
+  children: React.ReactNode;
+  currentPage?: 'home' | 'employees' | 'orgchart';
+}
 
-export const metadata = {
-  title: "Employee Hierarchy App",
-  description: "Manage and visualize employees in the organisation",
-};
+const Layout: React.FC<LayoutProps> = ({ children, currentPage = 'home' }) => {
+  const navigation = [
+    { name: 'Dashboard', href: '/', icon: Home, current: currentPage === 'home' },
+    { name: 'Employees', href: '/employees', icon: Users, current: currentPage === 'employees' },
+    { name: 'Org Chart', href: '/orgchart', icon: BarChart3, current: currentPage === 'orgchart' },
+  ];
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+  const handleNavClick = (href: string) => {
+    // In a real app, this would use router navigation
+    // For demo purposes, you can implement your routing logic here
+    console.log(`Navigate to: ${href}`);
+  };
+
   return (
-    <html lang="en" className={inter.className}>
-      <body className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-slate-800">
-        {/* Header */}
-        <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            {/* Brand */}
-            <Link
-              href="/"
-              className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600"
-            >
-              Employee Hierarchy
-            </Link>
+    <div className="app-container">
+      {/* Header */}
+      <header className="header">
+        <div className="header-content">
+          <a href="/" className="header-brand" onClick={(e) => { e.preventDefault(); handleNavClick('/'); }}>
+            <Building2 size={32} />
+            <span>EPI-USE Africa</span>
+          </a>
+          
+          <nav>
+            <ul className="header-nav">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <li key={item.name}>
+                    <a
+                      href={item.href}
+                      className={item.current ? 'active' : ''}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleNavClick(item.href);
+                      }}
+                    >
+                      <Icon size={18} />
+                      <span className="hidden-sm">{item.name}</span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        </div>
+      </header>
 
-            {/* Desktop Nav */}
-            <nav className="hidden md:flex space-x-6 text-sm font-medium">
-              <Link href="/employees" className="hover:text-blue-600">
-                Employees
-              </Link>
-              <Link href="/org" className="hover:text-blue-600">
-                Org Chart
-              </Link>
-            </nav>
+      {/* Main Content */}
+      <main className="main-content">
+        {children}
+      </main>
 
-            {/* Mobile Menu Button (optional) */}
-            <button className="md:hidden p-2 rounded-lg hover:bg-slate-100">
-              <Menu className="w-6 h-6 text-slate-700" />
-            </button>
+      {/* Footer */}
+      <footer className="footer">
+        <div className="footer-content">
+          <div className="footer-links">
+            <a href="#" onClick={(e) => e.preventDefault()}>About</a>
+            <a href="#" onClick={(e) => e.preventDefault()}>Privacy Policy</a>
+            <a href="#" onClick={(e) => e.preventDefault()}>Terms of Service</a>
+            <a href="#" onClick={(e) => e.preventDefault()}>Support</a>
+            <a href="#" onClick={(e) => e.preventDefault()}>Documentation</a>
           </div>
-        </header>
-
-        {/* Main content */}
-        <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
-          {children}
-        </main>
-
-        {/* Footer */}
-        <footer className="bg-white/80 backdrop-blur-sm border-t border-slate-200 py-6">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between text-sm text-slate-600 gap-4">
-            <p>© {new Date().getFullYear()} EPI-USE — Employee Hierarchy App</p>
-            <div className="flex gap-6">
-              <a
-                href="https://nextjs.org/learn"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-blue-600"
-              >
-                Documentation
-              </a>
-              <a href="#" className="hover:text-blue-600">
-                Examples
-              </a>
-              <a href="#" className="hover:text-blue-600">
-                Support
-              </a>
+          
+          <div className="footer-copyright">
+            <div className="flex items-center justify-center gap-6 mb-4">
+              <div className="flex items-center gap-2">
+                <Mail size={16} />
+                <span>techrecruit@epiuse.com</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone size={16} />
+                <span>+27 (0) 11 234 5678</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin size={16} />
+                <span>Johannesburg, South Africa</span>
+              </div>
+            </div>
+            
+            <div className="border-t border-gray-600 pt-4">
+              <p>&copy; {new Date().getFullYear()} EPI-USE Africa. All rights reserved.</p>
+              <p className="mt-2">
+                Employee Management System - Technical Assessment Solution
+              </p>
             </div>
           </div>
-        </footer>
-      </body>
-    </html>
+        </div>
+      </footer>
+    </div>
   );
-}
+};
+
+export default Layout;
