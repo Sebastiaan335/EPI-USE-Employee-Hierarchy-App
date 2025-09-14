@@ -1,6 +1,6 @@
 import React from 'react';
 import { Building2, Users, BarChart3, Home, Mail, Phone, MapPin } from 'lucide-react';
-import './global.css';
+import '../app/global.css';
 
 interface LayoutProps {
   children: React.ReactNode;
