@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Users, BarChart3, UserPlus, Building2 } from "lucide-react";
-import Layout from "./layout";
+import Layout from "../components/ui/layout";
 
 interface StatCardProps {
   title: string;
