@@ -16,7 +16,7 @@ import { getGravatarUrl } from "../../lib/gravatar";
 
 interface Employee {
   id: number;
-  employeeNumber: string;
+  employeenumber: string;
   name: string;
   surname: string;
   birthdate: string;
@@ -84,7 +84,7 @@ const EmployeesPage: React.FC = () => {
         searchTerm === "" ||
         employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        employee.employeeNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.employeenumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.role.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesRole = filterRole === "" || employee.role === filterRole;
@@ -187,8 +187,8 @@ const EmployeesPage: React.FC = () => {
             <thead>
               <tr>
                 <th>Profile</th>
-                <th onClick={() => handleSort("employeeNumber")} className="sortable">
-                  Employee # <SortIcon field="employeeNumber" />
+                <th onClick={() => handleSort("employeenumber")} className="sortable">
+                  Employee # <SortIcon field="employeenumber" />
                 </th>
                 <th onClick={() => handleSort("name")} className="sortable">
                   Name <SortIcon field="name" />
@@ -217,7 +217,7 @@ const EmployeesPage: React.FC = () => {
                     />
                   </td>
                   <td>
-                    <strong>{employee.employeeNumber}</strong>
+                    <strong>{employee.employeenumber}</strong>
                   </td>
                   <td>
                     <div>
@@ -278,9 +278,9 @@ const EmployeesPage: React.FC = () => {
                 <input
                   className="form-input"
                   placeholder="Employee Number"
-                  value={formData.employeeNumber || ""}
+                  value={formData.employeenumber || ""}
                   onChange={(e) =>
-                    setFormData({ ...formData, employeeNumber: e.target.value })
+                    setFormData({ ...formData, employeenumber: e.target.value })
                   }
                 />
                 <input
