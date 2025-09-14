@@ -10,8 +10,8 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children, currentPage = 'home' }) => {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home, current: currentPage === 'home' },
-    { name: 'Employees', href: '/employees', icon: Users, current: currentPage === 'employees' },
-    { name: 'Org Chart', href: '/orgchart', icon: BarChart3, current: currentPage === 'orgchart' },
+    { name: 'Employees', href: '../app/employees', icon: Users, current: currentPage === 'employees' },
+    { name: 'Org Chart', href: '../app/org', icon: BarChart3, current: currentPage === 'orgchart' },
   ];
 
   const handleNavClick = (href: string) => {
