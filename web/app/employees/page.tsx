@@ -19,7 +19,7 @@ interface Employee {
   employeeNumber: string;
   name: string;
   surname: string;
-  birthDate: string;
+  birthdate: string;
   salary: number;
   role: string;
   managerId?: number | null;
@@ -199,8 +199,8 @@ const EmployeesPage: React.FC = () => {
                 <th onClick={() => handleSort("salary")} className="sortable">
                   Salary <SortIcon field="salary" />
                 </th>
-                <th onClick={() => handleSort("birthDate")} className="sortable">
-                  Birth Date <SortIcon field="birthDate" />
+                <th onClick={() => handleSort("birthdate")} className="sortable">
+                  Birth Date <SortIcon field="birthdate" />
                 </th>
                 <th>Manager</th>
                 <th>Actions</th>
@@ -231,7 +231,7 @@ const EmployeesPage: React.FC = () => {
                     <span className="badge badge-blue">{employee.role}</span>
                   </td>
                   <td>{formatCurrency(employee.salary)}</td>
-                  <td>{formatDate(employee.birthDate)}</td>
+                  <td>{formatDate(employee.birthdate)}</td>
                   <td>{getManagerName(employee.managerId)}</td>
                   <td>
                     <div className="flex gap-2">
@@ -300,9 +300,9 @@ const EmployeesPage: React.FC = () => {
                 <input
                   className="form-input"
                   type="date"
-                  value={formData.birthDate || ""}
+                  value={formData.birthdate || ""}
                   onChange={(e) =>
-                    setFormData({ ...formData, birthDate: e.target.value })
+                    setFormData({ ...formData, birthdate: e.target.value })
                   }
                 />
                 <input
