@@ -1,308 +1,302 @@
-"use client";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Search,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Edit,
+  Trash2,
+  User,
+  Building2,
+} from "lucide-react";
+import { createHash } from 'crypto';
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import ReactFlow, {
-  Background,
-  Controls,
-  MiniMap,
-  Node,
-  Edge,
-  useNodesState,
-  useEdgesState,
-  Handle,
-  Position,
-} from "reactflow";
-import "reactflow/dist/style.css";
-import dagre from "dagre";
-import { getGravatarUrl } from "../../lib/gravatar";
-
-type ApiEmployee = {
-  id: number;
+interface Employee {
+  id: string;
+  employeeNumber: string;
   name: string;
   surname: string;
+  birthDate: string;
+  salary: number;
   role: string;
-  managerId: number | null;
-  email?: string;
-  birthDate?: string;
-  employeeNumber?: string;
-  salary?: number;
-};
-
-type Employee = ApiEmployee;
-
-const nodeWidth = 300;
-const nodeHeight = 140;
-
-// Custom node component
-const TreeNode = ({ data }: { data: any }) => {
-  const {
-    name,
-    surname,
-    role,
-    email,
-    level = 0,
-    isManager = false,
-    subordinateCount = 0,
-  } = data;
-  const initials = `${name?.[0] || ""}${surname?.[0] || ""}`;
-  const avatar = email ? getGravatarUrl(email, 64) : null;
-
-  const levelColors = [
-    "from-purple-600 to-pink-600",
-    "from-blue-600 to-indigo-600",
-    "from-green-600 to-emerald-600",
-    "from-orange-600 to-red-600",
-    "from-slate-600 to-gray-600",
-  ];
-  const bgColor = levelColors[Math.min(level, levelColors.length - 1)];
-
-  return (
-    <div className="group relative">
-      <Handle type="target" position={Position.Top} className="w-3 h-3 bg-blue-500 border-2 border-white opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 w-full h-full transition-all duration-300 group-hover:shadow-2xl group-hover:scale-105 group-hover:border-blue-300">
-        <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${bgColor} rounded-t-2xl`} />
-        <div className="flex items-start gap-4 mb-4">
-          {avatar ? (
-            <img
-              src={avatar}
-              alt={`${name} ${surname}`}
-              className="w-14 h-14 rounded-full shadow-lg ring-4 ring-white object-cover"
-            />
-          ) : (
-            <div
-              className={`w-14 h-14 bg-gradient-to-br ${bgColor} rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg ring-4 ring-white`}
-            >
-              {initials}
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1">
-              {name} {surname}
-            </h3>
-            <p className="text-gray-600 text-sm font-medium mb-2 leading-tight">
-              {role || "No role specified"}
-            </p>
-            {isManager && subordinateCount > 0 && (
-              <span className="text-xs font-semibold text-blue-700">
-                {subordinateCount} report{subordinateCount !== 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-purple-500 border-2 border-white opacity-0 group-hover:opacity-100 transition-opacity" />
-    </div>
-  );
-};
-
-const nodeTypes = { treeNode: TreeNode };
-
-// Build Dagre tree layout
-function buildTreeLayout(employees: ApiEmployee[]): { nodes: Node[]; edges: Edge[] } {
-  const employeeMap = new Map(employees.map((emp) => [emp.id, emp]));
-
-  const calculateLevel = (employee: ApiEmployee, visited = new Set()): number => {
-    if (visited.has(employee.id)) return 0;
-    visited.add(employee.id);
-    if (!employee.managerId || !employeeMap.has(employee.managerId)) return 0;
-    return 1 + calculateLevel(employeeMap.get(employee.managerId)!, visited);
-  };
-
-  const getSubordinateCount = (employeeId: number): number => {
-    const directReports = employees.filter((emp) => emp.managerId === employeeId);
-    return directReports.length + directReports.reduce((sum, emp) => sum + getSubordinateCount(emp.id), 0);
-  };
-
-  const nodes: Node[] = employees.map((emp) => {
-    const level = calculateLevel(emp);
-    const subordinateCount = getSubordinateCount(emp.id);
-    return {
-      id: emp.id.toString(),
-      type: "treeNode",
-      data: { ...emp, level, isManager: subordinateCount > 0, subordinateCount },
-      position: { x: 0, y: 0 },
-    };
-  });
-
-  const edges: Edge[] = employees
-    .filter((emp) => emp.managerId && employeeMap.has(emp.managerId))
-    .map((emp) => ({
-      id: `edge-${emp.managerId}-${emp.id}`,
-      source: emp.managerId!.toString(),
-      target: emp.id.toString(),
-      type: "smoothstep",
-      animated: true,
-    }));
-
-  const g = new dagre.graphlib.Graph();
-  g.setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: "TB", nodesep: 80, ranksep: 120 });
-
-  nodes.forEach((node) => g.setNode(node.id, { width: nodeWidth, height: nodeHeight }));
-  edges.forEach((edge) => g.setEdge(edge.source, edge.target));
-
-  dagre.layout(g);
-  nodes.forEach((node) => {
-    const pos = g.node(node.id);
-    node.position = { x: pos.x - nodeWidth / 2, y: pos.y - nodeHeight / 2 };
-  });
-
-  return { nodes, edges };
+  managerId?: string;
+  email: string;
 }
 
-export default function OrgTreePage() {
-  const [employees, setEmployees] = useState<ApiEmployee[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<Partial<Employee>>({});
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+interface TreeNode extends Employee {
+  children: TreeNode[];
+}
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
+interface OrgChartProps {
+  employees?: Employee[];
+  onUpdateEmployee?: (id: string, employee: Partial<Employee>) => void;
+  onDeleteEmployee?: (id: string) => void;
+}
 
-  const fetchEmployees = useCallback(async () => {
-    const res = await fetch("/api/employees");
-    if (!res.ok) return;
-    const data = await res.json();
-    setEmployees(data);
-    const { nodes, edges } = buildTreeLayout(data);
-    setNodes(nodes);
-    setEdges(edges);
-  }, [setNodes, setEdges]);
+const OrgChart: React.FC<OrgChartProps> = ({
+  employees: propEmployees,
+  onUpdateEmployee,
+  onDeleteEmployee,
+}) => {
+  // Mock data - in real app, this would come from props/API
+  const [employees] = useState<Employee[]>(
+    propEmployees || [
+      {
+        id: "1",
+        employeeNumber: "EMP001",
+        name: "John",
+        surname: "Smith",
+        birthDate: "1985-03-15",
+        salary: 95000,
+        role: "CEO",
+        email: "john.smith@company.com",
+      },
+      {
+        id: "2",
+        employeeNumber: "EMP002",
+        name: "Sarah",
+        surname: "Johnson",
+        birthDate: "1990-07-22",
+        salary: 75000,
+        role: "CTO",
+        managerId: "1",
+        email: "sarah.johnson@company.com",
+      },
+      {
+        id: "3",
+        employeeNumber: "EMP003",
+        name: "Mike",
+        surname: "Davis",
+        birthDate: "1988-11-08",
+        salary: 72000,
+        role: "Head of Sales",
+        managerId: "1",
+        email: "mike.davis@company.com",
+      },
+      {
+        id: "4",
+        employeeNumber: "EMP004",
+        name: "Lisa",
+        surname: "Brown",
+        birthDate: "1992-05-30",
+        salary: 65000,
+        role: "Senior Developer",
+        managerId: "2",
+        email: "lisa.brown@company.com",
+      },
+      {
+        id: "5",
+        employeeNumber: "EMP005",
+        name: "David",
+        surname: "Wilson",
+        birthDate: "1987-09-12",
+        salary: 58000,
+        role: "Developer",
+        managerId: "2",
+        email: "david.wilson@company.com",
+      },
+      {
+        id: "6",
+        employeeNumber: "EMP006",
+        name: "Emma",
+        surname: "Taylor",
+        birthDate: "1991-12-03",
+        salary: 62000,
+        role: "Sales Manager",
+        managerId: "3",
+        email: "emma.taylor@company.com",
+      },
+      {
+        id: "7",
+        employeeNumber: "EMP007",
+        name: "James",
+        surname: "Anderson",
+        birthDate: "1989-04-18",
+        salary: 55000,
+        role: "Junior Developer",
+        managerId: "4",
+        email: "james.anderson@company.com",
+      },
+    ]
+  );
 
-  useEffect(() => {
-    fetchEmployees();
-  }, [fetchEmployees]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null
+  );
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [highlightedEmployee, setHighlightedEmployee] = useState<string | null>(
+    null
+  );
 
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
-    setSelectedId(node.id);
-    fetch(`/api/employees/${node.id}`)
-      .then((r) => r.json())
-      .then((emp: Employee) => setEditData(emp))
-      .catch(() => setEditData({ id: Number(node.id) }));
-  }, []);
+  const chartRef = useRef<HTMLDivElement>(null);
 
-  const closeDialog = () => {
-    setSelectedId(null);
-    setEditData({});
-    setErrorMsg(null);
+  // Get Gravatar URL
+  const getGravatarUrl = (email: string, size: number = 40): string => {
+    const hash = createHash('md5').update(email.toLowerCase().trim()).digest('hex');
+    return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=identicon`;
   };
 
-  const onSave = async () => {
-    if (!editData?.id) return;
+  // Build tree structure from flat employee data
+  const buildTree = (employees: Employee[]): TreeNode[] => {
+    const nodeMap: { [key: string]: TreeNode } = {};
+    const roots: TreeNode[] = [];
 
-    if (!editData.name || !editData.surname || !editData.role) {
-      setErrorMsg("Name, surname, and role are required.");
-      return;
-    }
+    // Create nodes
+    employees.forEach((emp) => {
+      nodeMap[emp.id] = { ...emp, children: [] };
+    });
 
-    try {
-      const res = await fetch(`/api/employees/${editData.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editData),
-      });
-      if (!res.ok) throw new Error("Save failed");
-      closeDialog();
-      await fetchEmployees();
-    } catch {
-      setErrorMsg("Failed to save changes.");
+    // Build hierarchy
+    employees.forEach((emp) => {
+      const node = nodeMap[emp.id];
+      if (emp.managerId && nodeMap[emp.managerId]) {
+        nodeMap[emp.managerId].children.push(node);
+      } else {
+        roots.push(node);
+      }
+    });
+
+    return roots;
+  };
+
+  // Search functionality
+  const searchEmployees = (searchTerm: string): Employee[] => {
+    if (!searchTerm) return [];
+    return employees.filter(
+      (emp) =>
+        emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.employeeNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.role.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    if (term) {
+      const results = searchEmployees(term);
+      if (results.length > 0) {
+        setHighlightedEmployee(results[0].id);
+        setSelectedEmployee(results[0]);
+      }
+    } else {
+      setHighlightedEmployee(null);
+      setSelectedEmployee(null);
     }
   };
 
-  const onDelete = async () => {
-    if (!selectedId) return;
-    try {
-      const res = await fetch(`/api/employees/${selectedId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      closeDialog();
-      await fetchEmployees();
-    } catch {
-      setErrorMsg("Failed to delete employee.");
+  const handleZoom = (direction: "in" | "out" | "reset") => {
+    if (direction === "in") {
+      setZoomLevel((prev) => Math.min(prev * 1.2, 3));
+    } else if (direction === "out") {
+      setZoomLevel((prev) => Math.max(prev / 1.2, 0.5));
+    } else {
+      setZoomLevel(1);
+      setPanOffset({ x: 0, y: 0 });
     }
   };
 
-  const selectedNode = useMemo(() => nodes.find((n) => n.id === selectedId), [nodes, selectedId]);
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+  };
 
-  return (
-    <div className="h-screen">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeClick={onNodeClick}
-        nodeTypes={nodeTypes}
-        fitView
+  const renderNode = (node: TreeNode, level: number = 0): JSX.Element => {
+    const isHighlighted = highlightedEmployee === node.id;
+    const hasChildren = node.children.length > 0;
+
+    return (
+      <div
+        key={node.id}
+        className={`flex flex-col items-center m-4 p-4 rounded-lg shadow-md bg-white border-2 ${
+          isHighlighted ? "border-blue-500" : "border-gray-200"
+        }`}
+        style={{
+          transform: `scale(${zoomLevel})`,
+        }}
       >
-        <MiniMap />
-        <Controls />
-        <Background />
-      </ReactFlow>
-
-      {selectedNode && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg">
-            <h2 className="text-lg font-bold mb-4">Edit Employee</h2>
-            {errorMsg && <p className="text-red-600 mb-3">{errorMsg}</p>}
-            <div className="space-y-3">
-              <input
-                type="text"
-                className="w-full border rounded p-2"
-                value={editData.name ?? ""}
-                onChange={(e) => setEditData((d) => ({ ...d, name: e.target.value }))}
-                placeholder="First Name"
-              />
-              <input
-                type="text"
-                className="w-full border rounded p-2"
-                value={editData.surname ?? ""}
-                onChange={(e) => setEditData((d) => ({ ...d, surname: e.target.value }))}
-                placeholder="Last Name"
-              />
-              <input
-                type="text"
-                className="w-full border rounded p-2"
-                value={editData.role ?? ""}
-                onChange={(e) => setEditData((d) => ({ ...d, role: e.target.value }))}
-                placeholder="Role"
-              />
-              <input
-                type="date"
-                className="w-full border rounded p-2"
-                value={editData.birthDate ?? ""}
-                onChange={(e) => setEditData((d) => ({ ...d, birthDate: e.target.value }))}
-              />
-              <input
-                type="text"
-                className="w-full border rounded p-2"
-                value={editData.employeeNumber ?? ""}
-                onChange={(e) => setEditData((d) => ({ ...d, employeeNumber: e.target.value }))}
-                placeholder="Employee Number"
-              />
-              <input
-                type="number"
-                className="w-full border rounded p-2"
-                value={editData.salary ?? ""}
-                onChange={(e) => setEditData((d) => ({ ...d, salary: Number(e.target.value) }))}
-                placeholder="Salary"
-              />
-            </div>
-            <div className="mt-4 flex justify-between">
-              <button onClick={onDelete} className="px-4 py-2 bg-red-500 text-white rounded">
-                Delete
-              </button>
-              <div className="space-x-2">
-                <button onClick={closeDialog} className="px-4 py-2 border rounded">
-                  Cancel
-                </button>
-                <button onClick={onSave} className="px-4 py-2 bg-blue-600 text-white rounded">
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
+        <img
+          src={getGravatarUrl(node.email)}
+          alt={node.name}
+          className="w-16 h-16 rounded-full mb-2"
+        />
+        <h3 className="font-bold">{node.name} {node.surname}</h3>
+        <p className="text-sm text-gray-600">{node.role}</p>
+        <p className="text-xs text-gray-400">{node.employeeNumber}</p>
+        <p className="text-xs">{formatCurrency(node.salary)}</p>
+        <div className="flex space-x-2 mt-2">
+          {onUpdateEmployee && (
+            <button
+              onClick={() => onUpdateEmployee(node.id, {})}
+              className="text-blue-500 hover:text-blue-700"
+            >
+              <Edit size={16} />
+            </button>
+          )}
+          {onDeleteEmployee && (
+            <button
+              onClick={() => onDeleteEmployee(node.id)}
+              className="text-red-500 hover:text-red-700"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
         </div>
-      )}
+        {hasChildren && (
+          <div className="flex space-x-6 mt-4">
+            {node.children.map((child) => renderNode(child, level + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const tree = buildTree(employees);
+
+  return (
+    <div className="w-full">
+      {/* Controls */}
+      <div className="flex items-center space-x-4 mb-4">
+        <div className="flex items-center border rounded px-2">
+          <Search size={16} className="text-gray-500" />
+          <input
+            type="text"
+            placeholder="Search employees..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="ml-2 outline-none"
+          />
+        </div>
+        <button
+          onClick={() => handleZoom("in")}
+          className="p-2 border rounded hover:bg-gray-100"
+        >
+          <ZoomIn size={18} />
+        </button>
+        <button
+          onClick={() => handleZoom("out")}
+          className="p-2 border rounded hover:bg-gray-100"
+        >
+          <ZoomOut size={18} />
+        </button>
+        <button
+          onClick={() => handleZoom("reset")}
+          className="p-2 border rounded hover:bg-gray-100"
+        >
+          <RotateCcw size={18} />
+        </button>
+      </div>
+
+      {/* Org Chart */}
+      <div ref={chartRef} className="flex justify-center overflow-auto">
+        {tree.map((root) => renderNode(root))}
+      </div>
     </div>
   );
-}
+};
+
+export default OrgChart;
