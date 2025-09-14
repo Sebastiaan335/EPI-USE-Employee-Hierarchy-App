@@ -173,7 +173,7 @@ const OrgChartPage: React.FC = () => {
             {/* Edges */}
             <svg style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%" }}>
               {(edges || []).map((edge) =>
-                edge.sections?.map((section, idx) => (
+                (edge.sections || []).map((section, idx) => (
                   <polyline
                     key={edge.id + idx}
                     points={section.points.map((p: any) => `${p.x},${p.y}`).join(" ")}
