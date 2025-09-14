@@ -101,10 +101,15 @@ const OrgChartPage: React.FC = () => {
       setEdges(
         (layout.edges || []).map((edge: any) => ({
           id: edge.id,
-          sections: edge.sections || [],
+          sections: (edge.sections || []).map((s: any) => ({
+            points: s.points,
+          })),
         }))
       );
       setBounds({minX: 0, minY: 0, maxX: layout.width, maxY: layout.height, width: layout.width, height: layout.height, });
+
+      console.log("Edge[0] points:", layout.edges[0].sections[0].points);
+
     });
   }, [employees]);
 
@@ -194,10 +199,12 @@ const OrgChartPage: React.FC = () => {
             }}
           >
             {/* Edges */}
-            <svg style={{ position: "absolute", left: 0, top: 0 }}
-            width={bounds.width}
-            height={bounds.height}
-            viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}>
+            <svg
+              style={{ position: "absolute", left: 0, top: 0 }}
+              width={bounds.width}
+              height={bounds.height}
+              viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}
+            >
               {edges.map((edge) =>
                 (edge.sections || []).map((section, idx) => (
                   <polyline
