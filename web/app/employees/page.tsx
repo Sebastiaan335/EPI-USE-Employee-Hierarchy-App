@@ -1,76 +1,79 @@
-import React, { useState, useMemo } from 'react';
-import { Search, Filter, Plus, Edit, Trash2, ChevronUp, ChevronDown, User } from 'lucide-react';
-import { createHash } from 'crypto';
-import Layout from '../../app/layout';
+"use client";
+
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Search,
+  Filter,
+  Plus,
+  Edit,
+  Trash2,
+  ChevronUp,
+  ChevronDown,
+  User,
+} from "lucide-react";
+import Layout from "../../app/layout";
+import { getGravatarUrl } from "../../lib/gravatar";
 
 interface Employee {
-  id: string;
+  id: number;
   employeeNumber: string;
   name: string;
   surname: string;
   birthDate: string;
   salary: number;
   role: string;
-  managerId?: string;
+  managerId?: number | null;
   email: string;
 }
 
-interface EmployeesProps {
-  employees: Employee[];
-  onAddEmployee?: (employee: Omit<Employee, 'id'>) => void;
-  onUpdateEmployee?: (id: string, employee: Partial<Employee>) => void;
-  onDeleteEmployee?: (id: string) => void;
-}
-
-const Employees: React.FC<EmployeesProps> = ({
-  employees,
-  onAddEmployee,
-  onUpdateEmployee,
-  onDeleteEmployee
-}) => {
-  
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<keyof Employee>('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [filterRole, setFilterRole] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
+const EmployeesPage: React.FC = () => {
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] = useState<keyof Employee>("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [filterRole, setFilterRole] = useState("");
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
-  // Get Gravatar URL
-  const getGravatarUrl = (email: string, size: number = 40): string => {
-    const hash = createHash('md5').update(email.toLowerCase().trim()).digest('hex');
-    return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=identicon`;
+  // Fetch employees from API
+  useEffect(() => {
+    fetch("/api/employees")
+      .then((res) => res.json())
+      .then(setEmployees);
+  }, []);
+
+  // Delete employee
+  const handleDelete = async (id: number) => {
+    await fetch(`/api/employees/${id}`, { method: "DELETE" });
+    setEmployees((prev) => prev.filter((e) => e.id !== id));
   };
 
-  // Get manager name
-  const getManagerName = (managerId?: string): string => {
-    if (!managerId) return 'No Manager';
+  const getManagerName = (managerId?: number | null) => {
+    if (!managerId) return "No Manager";
     const manager = employees.find((emp) => emp.id === managerId);
-    return manager ? `${manager.name} ${manager.surname}` : 'Unknown';
+    return manager ? `${manager.name} ${manager.surname}` : "Unknown";
   };
 
-  // Filter and sort employees
+  // Filtering & sorting
   const filteredAndSortedEmployees = useMemo(() => {
-    let filtered = employees.filter(employee => {
-      const matchesSearch = searchTerm === '' || 
+    let filtered = employees.filter((employee) => {
+      const matchesSearch =
+        searchTerm === "" ||
         employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.employeeNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.role.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesRole = filterRole === '' || employee.role === filterRole;
-      
+
+      const matchesRole = filterRole === "" || employee.role === filterRole;
       return matchesSearch && matchesRole;
     });
 
     filtered.sort((a, b) => {
       let aValue = a[sortField] ?? "";
       let bValue = b[sortField] ?? "";
-      
-      if (typeof aValue === 'string') aValue = aValue.toLowerCase();
-      if (typeof bValue === 'string') bValue = bValue.toLowerCase();
-      
-      if (sortDirection === 'asc') {
+      if (typeof aValue === "string") aValue = aValue.toLowerCase();
+      if (typeof bValue === "string") bValue = bValue.toLowerCase();
+
+      if (sortDirection === "asc") {
         return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
       } else {
         return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
@@ -82,56 +85,42 @@ const Employees: React.FC<EmployeesProps> = ({
 
   const handleSort = (field: keyof Employee) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection("asc");
     }
   };
 
   const SortIcon = ({ field }: { field: keyof Employee }) => {
     if (sortField !== field) return null;
-    return sortDirection === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />;
+    return sortDirection === "asc" ? <ChevronUp size={16} /> : <ChevronDown size={16} />;
   };
 
-  const uniqueRoles = [...new Set(employees.map(emp => emp.role))];
+  const uniqueRoles = [...new Set(employees.map((emp) => emp.role))];
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
   return (
     <Layout currentPage="employees">
       <div className="container-wide">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="card-title">Employees</h1>
-              <p className="card-description">Manage your organization's employee data</p>
-            </div>
-            <button 
-              onClick={() => setShowAddModal(true)}
-              className="btn btn-primary"
-            >
-              <Plus size={16} />
-              Add Employee
-            </button>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="card-title">Employees</h1>
+            <p className="card-description">Manage your organization's employee data</p>
           </div>
+          <a href="/employees/add" className="btn btn-primary">
+            <Plus size={16} />
+            Add Employee
+          </a>
         </div>
 
-        {/* Search and Filter */}
+        {/* Search + Filter */}
         <div className="card mb-6">
           <div className="controls">
             <div className="search-container">
@@ -145,21 +134,23 @@ const Employees: React.FC<EmployeesProps> = ({
               />
             </div>
             <div className="flex items-center gap-2">
-              <Filter size={16} style={{ color: '#9ca3af' }} />
+              <Filter size={16} style={{ color: "#9ca3af" }} />
               <select
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value)}
                 className="form-select"
-                style={{ minWidth: '150px' }}
+                style={{ minWidth: "150px" }}
               >
                 <option value="">All Roles</option>
-                {uniqueRoles.map(role => (
-                  <option key={role} value={role}>{role}</option>
+                {uniqueRoles.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
-          <div className="mt-4" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+          <div className="mt-4 text-sm text-gray-500">
             Showing {filteredAndSortedEmployees.length} of {employees.length} employees
           </div>
         </div>
@@ -170,50 +161,20 @@ const Employees: React.FC<EmployeesProps> = ({
             <thead>
               <tr>
                 <th>Profile</th>
-                <th 
-                  className="sortable"
-                  onClick={() => handleSort('employeeNumber')}
-                >
-                  <div className="sortable">
-                    Employee #
-                    <SortIcon field="employeeNumber" />
-                  </div>
+                <th onClick={() => handleSort("employeeNumber")} className="sortable">
+                  Employee # <SortIcon field="employeeNumber" />
                 </th>
-                <th 
-                  className="sortable"
-                  onClick={() => handleSort('name')}
-                >
-                  <div className="sortable">
-                    Name
-                    <SortIcon field="name" />
-                  </div>
+                <th onClick={() => handleSort("name")} className="sortable">
+                  Name <SortIcon field="name" />
                 </th>
-                <th 
-                  className="sortable"
-                  onClick={() => handleSort('role')}
-                >
-                  <div className="sortable">
-                    Role
-                    <SortIcon field="role" />
-                  </div>
+                <th onClick={() => handleSort("role")} className="sortable">
+                  Role <SortIcon field="role" />
                 </th>
-                <th 
-                  className="sortable"
-                  onClick={() => handleSort('salary')}
-                >
-                  <div className="sortable">
-                    Salary
-                    <SortIcon field="salary" />
-                  </div>
+                <th onClick={() => handleSort("salary")} className="sortable">
+                  Salary <SortIcon field="salary" />
                 </th>
-                <th 
-                  className="sortable"
-                  onClick={() => handleSort('birthDate')}
-                >
-                  <div className="sortable">
-                    Birth Date
-                    <SortIcon field="birthDate" />
-                  </div>
+                <th onClick={() => handleSort("birthDate")} className="sortable">
+                  Birth Date <SortIcon field="birthDate" />
                 </th>
                 <th>Manager</th>
                 <th>Actions</th>
@@ -225,51 +186,39 @@ const Employees: React.FC<EmployeesProps> = ({
                   <td>
                     <img
                       className="avatar avatar-sm"
-                      src={getGravatarUrl(employee.email)}
+                      src={getGravatarUrl(employee.email, 40)}
                       alt={`${employee.name} ${employee.surname}`}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = `https://www.gravatar.com/avatar/00000000000000000000000000000000?s=40&d=mp`;
-                      }}
                     />
                   </td>
                   <td>
-                    <span style={{ fontWeight: '500' }}>{employee.employeeNumber}</span>
+                    <strong>{employee.employeeNumber}</strong>
                   </td>
                   <td>
                     <div>
-                      <div style={{ fontWeight: '500', marginBottom: '0.125rem' }}>
+                      <div style={{ fontWeight: 500 }}>
                         {employee.name} {employee.surname}
                       </div>
-                      <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{employee.email}</div>
+                      <div className="text-sm text-gray-500">{employee.email}</div>
                     </div>
                   </td>
                   <td>
                     <span className="badge badge-blue">{employee.role}</span>
                   </td>
-                  <td>
-                    {formatCurrency(employee.salary)}
-                  </td>
-                  <td>
-                    {formatDate(employee.birthDate)}
-                  </td>
-                  <td>
-                    {getManagerName(employee.managerId)}
-                  </td>
+                  <td>{formatCurrency(employee.salary)}</td>
+                  <td>{formatDate(employee.birthDate)}</td>
+                  <td>{getManagerName(employee.managerId)}</td>
                   <td>
                     <div className="flex gap-2">
                       <button
                         onClick={() => setEditingEmployee(employee)}
                         className="btn btn-sm btn-secondary"
-                        style={{ padding: '0.25rem' }}
                         title="Edit Employee"
                       >
                         <Edit size={14} />
                       </button>
                       <button
-                        onClick={() => onDeleteEmployee?.(employee.id)}
+                        onClick={() => handleDelete(employee.id)}
                         className="btn btn-sm btn-danger"
-                        style={{ padding: '0.25rem' }}
                         title="Delete Employee"
                       >
                         <Trash2 size={14} />
@@ -287,7 +236,9 @@ const Employees: React.FC<EmployeesProps> = ({
             <User className="empty-state-icon" />
             <h3>No employees found</h3>
             <p>
-              {searchTerm || filterRole ? 'Try adjusting your search or filter criteria.' : 'Get started by adding a new employee.'}
+              {searchTerm || filterRole
+                ? "Try adjusting your search or filter criteria."
+                : "Get started by adding a new employee."}
             </p>
           </div>
         )}
@@ -296,4 +247,4 @@ const Employees: React.FC<EmployeesProps> = ({
   );
 };
 
-export default Employees;
+export default EmployeesPage;
