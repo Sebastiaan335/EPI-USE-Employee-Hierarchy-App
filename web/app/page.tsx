@@ -40,8 +40,11 @@ const Home: React.FC = () => {
         const avgSalary =
           totalEmployees > 0
             ? Math.round(
-                data.reduce((sum: number, e: any) => sum + e.salary, 0) /
-                  totalEmployees
+                data.reduce(
+                  (sum: number, e: any) =>
+                    sum + (typeof e.salary === "number" && !isNaN(e.salary) ? e.salary : 0),
+                  0
+                ) / totalEmployees
               )
             : 0;
         setStats({ totalEmployees, totalManagers, departments: 1, avgSalary });
@@ -81,7 +84,7 @@ const Home: React.FC = () => {
           />
           <StatCard
             title="Avg Salary"
-            value={`$${stats.avgSalary.toLocaleString()}`}
+            value={`R${stats.avgSalary.toLocaleString()}`}
             icon={<BarChart3 size={24} />}
             colorClass="orange"
           />

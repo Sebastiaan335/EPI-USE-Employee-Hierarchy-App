@@ -13,33 +13,36 @@ import {
 } from "lucide-react";
 import Layout from "../../components/layout";
 import { getGravatarUrl } from "../../lib/gravatar";
-import dagre from "dagre";
+import ELK from "elkjs/lib/elk.bundled.js";
 
 interface Employee {
   id: number;
-  employeeNumber: string;
+  employeenumber: string;
   name: string;
   surname: string;
-  birthDate: string;
+  birthdate: string;
   salary: number;
   role: string;
-  managerId?: number | null;
+  managerid?: number | null;
   email: string;
 }
 
 interface PositionedNode extends Employee {
   x: number;
   y: number;
+  width: number;
+  height: number;
 }
 
 const OrgChartPage: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [nodes, setNodes] = useState<PositionedNode[]>([]);
+  const [edges, setEdges] = useState<{ id: string; sections: any[] }[]>([]);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [highlightedEmployee, setHighlightedEmployee] = useState<number | null>(
-    null
-  );
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const lastPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
   const chartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,51 +51,64 @@ const OrgChartPage: React.FC = () => {
       .then(setEmployees);
   }, []);
 
-  // Compute layout with Dagre
-  const computeLayout = (emps: Employee[]) => {
-    const g = new dagre.graphlib.Graph();
-    g.setGraph({ rankdir: "TB", nodesep: 50, ranksep: 120 });
-    g.setDefaultEdgeLabel(() => ({}));
+  // Compute layout with ELK
+  useEffect(() => {
+    if (employees.length === 0) return;
 
+    const elk = new ELK();
     const nodeWidth = 220;
     const nodeHeight = 100;
 
-    emps.forEach((emp) => {
-      g.setNode(emp.id.toString(), { width: nodeWidth, height: nodeHeight });
+    const graph = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "DOWN",
+        "elk.layered.spacing.nodeNodeBetweenLayers": "80",
+        "elk.spacing.nodeNode": "40",
+      },
+      children: employees.map((emp) => ({
+        id: emp.id.toString(),
+        width: nodeWidth,
+        height: nodeHeight,
+        emp,
+      })),
+      edges: employees
+        .filter((emp) => emp.managerid)
+        .map((emp) => ({
+          id: `${emp.managerid}-${emp.id}`,
+          sources: [emp.managerid!.toString()],
+          targets: [emp.id.toString()],
+        })),
+    };
+
+    elk.layout(graph).then((layout) => {
+      setNodes(
+        layout.children!.map((n: any) => ({
+          ...(n.emp as Employee),
+          x: n.x,
+          y: n.y,
+          width: n.width,
+          height: n.height,
+        }))
+      );
+      setEdges(
+        (layout.edges || []).map((edge: any) => ({
+          id: edge.id,
+          sections: edge.sections || [],
+        }))
+      );
     });
-
-    emps.forEach((emp) => {
-      if (emp.managerId) {
-        g.setEdge(emp.managerId.toString(), emp.id.toString());
-      }
-    });
-
-    dagre.layout(g);
-
-    const nodes: PositionedNode[] = emps.map((emp) => {
-      const pos = g.node(emp.id.toString());
-      return { ...emp, x: pos.x, y: pos.y };
-    });
-
-    const edges = g.edges().map((e) => {
-      const points = g.edge(e).points as { x: number; y: number }[];
-      return { source: e.v, target: e.w, points };
-    });
-
-    return { nodes, edges };
-  };
-
-  const { nodes, edges } = computeLayout(employees);
+  }, [employees]);
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+    new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(
       amount
     );
 
   const handleDelete = async (id: number) => {
     await fetch(`/api/employees/${id}`, { method: "DELETE" });
     setEmployees((prev) => prev.filter((e) => e.id !== id));
-    setSelectedEmployee(null);
   };
 
   const handleZoom = (direction: "in" | "out" | "reset") => {
@@ -100,6 +116,20 @@ const OrgChartPage: React.FC = () => {
     if (direction === "out") setZoomLevel((z) => Math.max(z / 1.2, 0.5));
     if (direction === "reset") setZoomLevel(1);
   };
+
+  // Panning handlers
+  const onMouseDown = (e: React.MouseEvent) => {
+    setIsPanning(true);
+    lastPos.current = { x: e.clientX, y: e.clientY };
+  };
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isPanning) return;
+    const dx = e.clientX - lastPos.current.x;
+    const dy = e.clientY - lastPos.current.y;
+    setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+    lastPos.current = { x: e.clientX, y: e.clientY };
+  };
+  const onMouseUp = () => setIsPanning(false);
 
   return (
     <Layout currentPage="orgchart">
@@ -127,103 +157,88 @@ const OrgChartPage: React.FC = () => {
         </div>
 
         {/* Org Chart */}
-        <div className="card" style={{ position: "relative", overflow: "auto", minHeight: "600px" }}>
+        <div
+          className="card"
+          style={{ position: "relative", overflow: "hidden", minHeight: "600px", cursor: isPanning ? "grabbing" : "grab" }}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseUp}
+          ref={chartRef}
+        >
           <div
-            ref={chartRef}
             style={{
-              transform: `scale(${zoomLevel})`,
-              transformOrigin: "top center",
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})`,
+              transformOrigin: "top left",
               position: "relative",
               width: "100%",
               height: "100%",
             }}
           >
-            {nodes.length > 0 ? (
-              <div style={{ position: "relative" }}>
-                {/* Edges drawn with SVG */}
-                <svg
-                  style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%" }}
-                >
-                  {edges.map((edge, idx) => (
-                    <polyline
-                      key={idx}
-                      points={edge.points.map((p) => `${p.x},${p.y}`).join(" ")}
-                      fill="none"
-                      stroke="#9ca3af"
-                      strokeWidth={2}
-                    />
-                  ))}
-                </svg>
+            {/* Edges */}
+            <svg style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%" }}>
+              {edges.map((edge) =>
+                edge.sections.map((section, idx) => (
+                  <polyline
+                    key={edge.id + idx}
+                    points={section.points.map((p: any) => `${p.x},${p.y}`).join(" ")}
+                    fill="none"
+                    stroke="#9ca3af"
+                    strokeWidth={2}
+                  />
+                ))
+              )}
+            </svg>
 
-                {/* Nodes */}
-                {nodes.map((node) => (
-                  <div
-                    key={node.id}
-                    className={`org-node ${highlightedEmployee === node.id ? "highlighted" : ""}`}
-                    style={{
-                      position: "absolute",
-                      left: `${node.x - 110}px`,
-                      top: `${node.y - 50}px`,
-                      width: "220px",
-                      height: "100px",
-                    }}
-                    onClick={() => {
-                      setSelectedEmployee(node);
-                      setHighlightedEmployee(node.id);
-                    }}
-                  >
-                    <div className="org-node-header">
-                      <img
-                        className="avatar avatar-md"
-                        src={getGravatarUrl(node.email, 48)}
-                        alt={`${node.name} ${node.surname}`}
-                      />
-                      <div className="org-node-info">
-                        <h3>
-                          {node.name} {node.surname}
-                        </h3>
-                        <p>{node.employeeNumber}</p>
-                        <p className="org-node-role">{node.role}</p>
-                      </div>
-                    </div>
-                    <div className="org-node-details">
-                      <div className="flex justify-between">
-                        <span>Salary:</span>
-                        <span style={{ fontWeight: 500 }}>{formatCurrency(node.salary)}</span>
-                      </div>
-                    </div>
-                    <div className="org-node-actions">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedEmployee(node);
-                        }}
-                        className="btn btn-sm btn-primary"
-                        title="Edit"
-                      >
-                        <Edit size={12} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(node.id);
-                        }}
-                        className="btn btn-sm btn-danger"
-                        title="Delete"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
+            {/* Nodes */}
+            {nodes.map((node) => (
+              <div
+                key={node.id}
+                className="org-node"
+                style={{
+                  position: "absolute",
+                  left: node.x,
+                  top: node.y,
+                  width: node.width,
+                  height: node.height,
+                }}
+              >
+                <div className="org-node-header">
+                  <img
+                    className="avatar avatar-md"
+                    src={getGravatarUrl(node.email, 48)}
+                    alt={`${node.name} ${node.surname}`}
+                  />
+                  <div className="org-node-info">
+                    <h3>
+                      {node.name} {node.surname}
+                    </h3>
+                    <p>{node.employeenumber}</p>
+                    <p className="org-node-role">{node.role}</p>
                   </div>
-                ))}
+                </div>
+                <div className="org-node-details">
+                  <div className="flex justify-between">
+                    <span>Salary:</span>
+                    <span style={{ fontWeight: 500 }}>{formatCurrency(node.salary)}</span>
+                  </div>
+                </div>
+                <div className="org-node-actions">
+                  <button
+                    onClick={() => alert("TODO: Edit modal")}
+                    className="btn btn-sm btn-primary"
+                  >
+                    <Edit size={12} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(node.id)}
+                    className="btn btn-sm btn-danger"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
               </div>
-            ) : (
-              <div className="empty-state">
-                <User className="empty-state-icon" />
-                <h3>No organizational structure found</h3>
-                <p>Add employees and set manager relationships to see hierarchy.</p>
-              </div>
-            )}
+            ))}
           </div>
         </div>
       </div>
