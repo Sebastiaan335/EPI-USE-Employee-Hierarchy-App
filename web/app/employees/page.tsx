@@ -196,19 +196,34 @@ const EmployeesPage: React.FC = () => {
               <tr>
                 <th>Profile</th>
                 <th onClick={() => handleSort("employeenumber")} className="sortable">
-                  Employee # <SortIcon field="employeenumber" />
+                  <div className="flex items-center gap-1">
+                    Employee #
+                    <SortIcon field="employeenumber" />
+                  </div>
                 </th>
                 <th onClick={() => handleSort("name")} className="sortable">
-                  Name <SortIcon field="name" />
+                  <div className="flex items-center gap-1">
+                    Name
+                    <SortIcon field="name" />
+                  </div>
                 </th>
                 <th onClick={() => handleSort("role")} className="sortable">
-                  Role <SortIcon field="role" />
+                  <div className="flex items-center gap-1">
+                    Role
+                    <SortIcon field="role" />
+                  </div>
                 </th>
                 <th onClick={() => handleSort("salary")} className="sortable">
-                  Salary <SortIcon field="salary" />
+                  <div className="flex items-center gap-1">
+                    Salary
+                    <SortIcon field="salary" />
+                  </div>
                 </th>
                 <th onClick={() => handleSort("birthdate")} className="sortable">
-                  Birth Date <SortIcon field="birthdate" />
+                  <div className="flex items-center gap-1">
+                    Birth Date
+                    <SortIcon field="birthdate" />
+                  </div>
                 </th>
                 <th>Manager</th>
                 <th>Actions</th>
