@@ -85,14 +85,21 @@ const OrgChartPage: React.FC = () => {
     };
 
     elk.layout(graph).then((layout) => {
+      console.log("ELK layout", layout);
       const children = layout.children || [];
       const edges = layout.edges || [];
 
       // Compute bounding box
-      const minX = Math.min(...children.map((n: any) => n.x));
-      const minY = Math.min(...children.map((n: any) => n.y));
-      const maxX = Math.max(...children.map((n: any) => n.x + n.width));
-      const maxY = Math.max(...children.map((n: any) => n.y + n.height));
+      const xs = children.map((n: any) => n.x);
+      const ys = children.map((n: any) => n.y);
+      const maxXs = children.map((n: any) => n.x + n.width);
+      const maxYs = children.map((n: any) => n.y + n.height);
+
+      const minX = xs.length ? Math.min(...xs) : 0;
+      const minY = ys.length ? Math.min(...ys) : 0;
+      const maxX = maxXs.length ? Math.max(...maxXs) : 0;
+      const maxY = maxYs.length ? Math.max(...maxYs) : 0;
+
 
       const width = maxX - minX + 200; // padding
       const height = maxY - minY + 200;
@@ -129,7 +136,6 @@ const OrgChartPage: React.FC = () => {
   const handleZoom = (direction: "in" | "out" | "reset") => {
     if (direction === "in") setZoomLevel((z) => Math.min(z * 1.2, 3));
     if (direction === "out") setZoomLevel((z) => Math.max(z / 1.2, 0.5));
-    if (direction === "reset") handleReset();
   };
 
   const handleReset = () => {
@@ -179,7 +185,7 @@ const OrgChartPage: React.FC = () => {
             <button onClick={() => handleZoom("in")} className="btn btn-sm btn-secondary">
               <ZoomIn size={16} />
             </button>
-            <button onClick={() => handleZoom("reset")} className="btn btn-sm btn-secondary">
+            <button onClick={handleReset} className="btn btn-sm btn-secondary">
               <RotateCcw size={16} />
             </button>
           </div>
