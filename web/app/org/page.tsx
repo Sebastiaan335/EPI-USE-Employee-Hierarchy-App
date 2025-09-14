@@ -35,9 +35,7 @@ interface PositionedNode extends Employee {
 const OrgChartPage: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
-    null
-  );
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [highlightedEmployee, setHighlightedEmployee] = useState<number | null>(
     null
@@ -50,10 +48,10 @@ const OrgChartPage: React.FC = () => {
       .then(setEmployees);
   }, []);
 
-  // Build dagre layout
-  const computeLayout = (emps: Employee[]): { nodes: PositionedNode[]; edges: { source: number; target: number }[] } => {
+  // Compute layout with Dagre
+  const computeLayout = (emps: Employee[]) => {
     const g = new dagre.graphlib.Graph();
-    g.setGraph({ rankdir: "TB", nodesep: 50, ranksep: 100 });
+    g.setGraph({ rankdir: "TB", nodesep: 50, ranksep: 120 });
     g.setDefaultEdgeLabel(() => ({}));
 
     const nodeWidth = 220;
@@ -63,11 +61,9 @@ const OrgChartPage: React.FC = () => {
       g.setNode(emp.id.toString(), { width: nodeWidth, height: nodeHeight });
     });
 
-    const edges: { source: number; target: number }[] = [];
     emps.forEach((emp) => {
       if (emp.managerId) {
         g.setEdge(emp.managerId.toString(), emp.id.toString());
-        edges.push({ source: emp.managerId, target: emp.id });
       }
     });
 
@@ -76,6 +72,11 @@ const OrgChartPage: React.FC = () => {
     const nodes: PositionedNode[] = emps.map((emp) => {
       const pos = g.node(emp.id.toString());
       return { ...emp, x: pos.x, y: pos.y };
+    });
+
+    const edges = g.edges().map((e) => {
+      const points = g.edge(e).points as { x: number; y: number }[];
+      return { source: e.v, target: e.w, points };
     });
 
     return { nodes, edges };
@@ -125,29 +126,7 @@ const OrgChartPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="card mb-6">
-          <div className="controls">
-            <div className="search-container">
-              <Search className="search-icon" size={16} />
-              <input
-                type="text"
-                placeholder="Search employees..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
-            </div>
-            <div className="flex items-center">
-              <Building2 size={16} className="mr-2" />
-              <span className="text-sm text-gray-500">
-                Total Employees: {employees.length}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Org Chart with dagre positions */}
+        {/* Org Chart */}
         <div className="card" style={{ position: "relative", overflow: "auto", minHeight: "600px" }}>
           <div
             ref={chartRef}
@@ -160,7 +139,23 @@ const OrgChartPage: React.FC = () => {
             }}
           >
             {nodes.length > 0 ? (
-              <div>
+              <div style={{ position: "relative" }}>
+                {/* Edges drawn with SVG */}
+                <svg
+                  style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%" }}
+                >
+                  {edges.map((edge, idx) => (
+                    <polyline
+                      key={idx}
+                      points={edge.points.map((p) => `${p.x},${p.y}`).join(" ")}
+                      fill="none"
+                      stroke="#9ca3af"
+                      strokeWidth={2}
+                    />
+                  ))}
+                </svg>
+
+                {/* Nodes */}
                 {nodes.map((node) => (
                   <div
                     key={node.id}
