@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import {
   Search,
   ZoomIn,
@@ -7,8 +7,6 @@ import {
   RotateCcw,
   Edit,
   Trash2,
-  User,
-  Building2,
 } from "lucide-react";
 import { createHash } from 'crypto';
 
@@ -29,127 +27,42 @@ export interface TreeNode extends Employee {
 }
 
 export interface OrgChartProps {
-  employees?: Employee[];
+  employees: Employee[]; // required now (no mock data fallback)
   onUpdateEmployee?: (id: string, employee: Partial<Employee>) => void;
   onDeleteEmployee?: (id: string) => void;
 }
 
 const OrgChart: React.FC<OrgChartProps> = ({
-  employees: propEmployees,
+  employees,
   onUpdateEmployee,
   onDeleteEmployee,
 }) => {
-  // Mock data - in real app, this would come from props/API
-  const [employees] = useState<Employee[]>(
-    propEmployees || [
-      {
-        id: "1",
-        employeeNumber: "EMP001",
-        name: "John",
-        surname: "Smith",
-        birthDate: "1985-03-15",
-        salary: 95000,
-        role: "CEO",
-        email: "john.smith@company.com",
-      },
-      {
-        id: "2",
-        employeeNumber: "EMP002",
-        name: "Sarah",
-        surname: "Johnson",
-        birthDate: "1990-07-22",
-        salary: 75000,
-        role: "CTO",
-        managerId: "1",
-        email: "sarah.johnson@company.com",
-      },
-      {
-        id: "3",
-        employeeNumber: "EMP003",
-        name: "Mike",
-        surname: "Davis",
-        birthDate: "1988-11-08",
-        salary: 72000,
-        role: "Head of Sales",
-        managerId: "1",
-        email: "mike.davis@company.com",
-      },
-      {
-        id: "4",
-        employeeNumber: "EMP004",
-        name: "Lisa",
-        surname: "Brown",
-        birthDate: "1992-05-30",
-        salary: 65000,
-        role: "Senior Developer",
-        managerId: "2",
-        email: "lisa.brown@company.com",
-      },
-      {
-        id: "5",
-        employeeNumber: "EMP005",
-        name: "David",
-        surname: "Wilson",
-        birthDate: "1987-09-12",
-        salary: 58000,
-        role: "Developer",
-        managerId: "2",
-        email: "david.wilson@company.com",
-      },
-      {
-        id: "6",
-        employeeNumber: "EMP006",
-        name: "Emma",
-        surname: "Taylor",
-        birthDate: "1991-12-03",
-        salary: 62000,
-        role: "Sales Manager",
-        managerId: "3",
-        email: "emma.taylor@company.com",
-      },
-      {
-        id: "7",
-        employeeNumber: "EMP007",
-        name: "James",
-        surname: "Anderson",
-        birthDate: "1989-04-18",
-        salary: 55000,
-        role: "Junior Developer",
-        managerId: "4",
-        email: "james.anderson@company.com",
-      },
-    ]
-  );
-
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null
   );
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-  const [highlightedEmployee, setHighlightedEmployee] = useState<string | null>(
-    null
-  );
+  const [highlightedEmployee, setHighlightedEmployee] = useState<
+    string | null
+  >(null);
 
   const chartRef = useRef<HTMLDivElement>(null);
 
-  // Get Gravatar URL
+  // ✅ Browser-safe Gravatar URL
   const getGravatarUrl = (email: string, size: number = 40): string => {
     const hash = createHash('md5').update(email.toLowerCase().trim()).digest('hex');
     return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=identicon`;
   };
 
-  // Build tree structure from flat employee data
+  // Build tree structure
   const buildTree = (employees: Employee[]): TreeNode[] => {
     const nodeMap: { [key: string]: TreeNode } = {};
     const roots: TreeNode[] = [];
 
-    // Create nodes
     employees.forEach((emp) => {
       nodeMap[emp.id] = { ...emp, children: [] };
     });
 
-    // Build hierarchy
     employees.forEach((emp) => {
       const node = nodeMap[emp.id];
       if (emp.managerId && nodeMap[emp.managerId]) {
@@ -163,14 +76,14 @@ const OrgChart: React.FC<OrgChartProps> = ({
   };
 
   // Search functionality
-  const searchEmployees = (searchTerm: string): Employee[] => {
-    if (!searchTerm) return [];
+  const searchEmployees = (term: string): Employee[] => {
+    if (!term) return [];
     return employees.filter(
       (emp) =>
-        emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.employeeNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.role.toLowerCase().includes(searchTerm.toLowerCase())
+        emp.name.toLowerCase().includes(term.toLowerCase()) ||
+        emp.surname.toLowerCase().includes(term.toLowerCase()) ||
+        emp.employeeNumber.toLowerCase().includes(term.toLowerCase()) ||
+        emp.role.toLowerCase().includes(term.toLowerCase())
     );
   };
 
@@ -195,7 +108,6 @@ const OrgChart: React.FC<OrgChartProps> = ({
       setZoomLevel((prev) => Math.max(prev / 1.2, 0.5));
     } else {
       setZoomLevel(1);
-      setPanOffset({ x: 0, y: 0 });
     }
   };
 
@@ -206,7 +118,7 @@ const OrgChart: React.FC<OrgChartProps> = ({
     }).format(amount);
   };
 
-  const renderNode = (node: TreeNode, level: number = 0): JSX.Element => {
+  const renderNode = (node: TreeNode): JSX.Element => {
     const isHighlighted = highlightedEmployee === node.id;
     const hasChildren = node.children.length > 0;
 
@@ -225,7 +137,9 @@ const OrgChart: React.FC<OrgChartProps> = ({
           alt={node.name}
           className="w-16 h-16 rounded-full mb-2"
         />
-        <h3 className="font-bold">{node.name} {node.surname}</h3>
+        <h3 className="font-bold">
+          {node.name} {node.surname}
+        </h3>
         <p className="text-sm text-gray-600">{node.role}</p>
         <p className="text-xs text-gray-400">{node.employeeNumber}</p>
         <p className="text-xs">{formatCurrency(node.salary)}</p>
@@ -249,7 +163,7 @@ const OrgChart: React.FC<OrgChartProps> = ({
         </div>
         {hasChildren && (
           <div className="flex space-x-6 mt-4">
-            {node.children.map((child) => renderNode(child, level + 1))}
+            {node.children.map((child) => renderNode(child))}
           </div>
         )}
       </div>
