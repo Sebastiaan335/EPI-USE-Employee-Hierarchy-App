@@ -8,7 +8,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model employee {
+model employees {
   id              Int         @id @default(autoincrement())
   name            String      @db.VarChar(100)
   surname         String      @db.VarChar(100)
@@ -18,8 +18,8 @@ model employee {
   salary          Decimal     @db.Decimal(12, 2)
   role            String      @db.VarChar(100)
   managerId       Int?
-  manager       employee?  @relation("employeesToemployees", fields: [managerId], references: [id], onUpdate: NoAction, map: "fk_manager")
-  other_employees employee[] @relation("employeesToemployees")
+  manager       employees?  @relation("employeesToemployees", fields: [managerId], references: [id], onUpdate: NoAction, map: "fk_manager")
+  other_employees employees[] @relation("employeesToemployees")
 
   @@index([employeenumber], map: "idx_employees_employee_number")
   @@index([managerId], map: "idx_employees_manager_id")

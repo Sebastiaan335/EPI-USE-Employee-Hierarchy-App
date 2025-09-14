@@ -7,7 +7,7 @@ type OrgEdge = { id: number; source: number; target: number };
 
 export async function GET() {
   try {
-    const employees = await prisma.employee.findMany({
+    const employees = await prisma.employees.findMany({
       select: { id: true, name: true, surname: true, role: true, managerId: true },
       orderBy: { id: "asc" },
     });
