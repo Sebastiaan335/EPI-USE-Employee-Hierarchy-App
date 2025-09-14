@@ -1,23 +1,22 @@
 import React from 'react';
 import { Users, BarChart3, UserPlus, Building2 } from 'lucide-react';
+import Layout from './layout';
 
 interface StatCardProps {
   title: string;
   value: string | number;
   icon: React.ReactNode;
-  color: string;
+  colorClass: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color }) => (
-  <div className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${color}`}>
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-600">{title}</p>
-        <p className="text-3xl font-bold text-gray-900">{value}</p>
-      </div>
-      <div className={`p-3 rounded-full ${color.replace('border-l-', 'bg-').replace('-500', '-100')}`}>
-        {icon}
-      </div>
+const StatCard: React.FC<StatCardProps> = ({ title, value, icon, colorClass }) => (
+  <div className={`stat-card ${colorClass}`}>
+    <div className="stat-info">
+      <h3>{title}</h3>
+      <p>{value}</p>
+    </div>
+    <div className="stat-icon">
+      {icon}
     </div>
   </div>
 );
@@ -39,99 +38,99 @@ const Home: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <Layout currentPage="home">
+      <div className="container-wide">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Employee Management Dashboard</h1>
-          <p className="text-gray-600">Manage your organization's employee hierarchy and data</p>
+          <h1 className="card-title">Employee Management Dashboard</h1>
+          <p className="card-description">Manage your organization's employee hierarchy and data</p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="stats-grid">
           <StatCard
             title="Total Employees"
             value={stats.totalEmployees}
-            icon={<Users className="h-6 w-6 text-blue-600" />}
-            color="border-l-blue-500"
+            icon={<Users size={24} />}
+            colorClass="blue"
           />
           <StatCard
             title="Total Managers"
             value={stats.totalManagers}
-            icon={<UserPlus className="h-6 w-6 text-green-600" />}
-            color="border-l-green-500"
+            icon={<UserPlus size={24} />}
+            colorClass="green"
           />
           <StatCard
             title="Departments"
             value={stats.departments}
-            icon={<Building2 className="h-6 w-6 text-purple-600" />}
-            color="border-l-purple-500"
+            icon={<Building2 size={24} />}
+            colorClass="purple"
           />
           <StatCard
             title="Avg Salary"
             value={`$${stats.avgSalary.toLocaleString()}`}
-            icon={<BarChart3 className="h-6 w-6 text-orange-600" />}
-            color="border-l-orange-500"
+            icon={<BarChart3 size={24} />}
+            colorClass="orange"
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="flex flex-col gap-6" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem' }}>
           {/* Quick Actions */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-              <div className="space-y-3">
-                <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
-                  <UserPlus className="h-4 w-4" />
-                  Add New Employee
-                </button>
-                <button className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
-                  <Users className="h-4 w-4" />
-                  View All Employees
-                </button>
-                <button className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  View Org Chart
-                </button>
-              </div>
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Quick Actions</h3>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button className="btn btn-primary">
+                <UserPlus size={16} />
+                Add New Employee
+              </button>
+              <button className="btn btn-secondary">
+                <Users size={16} />
+                View All Employees
+              </button>
+              <button className="btn btn-secondary">
+                <BarChart3 size={16} />
+                View Org Chart
+              </button>
             </div>
           </div>
 
           {/* Recent Activities */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
-              <div className="space-y-4">
-                {recentActivities.map((activity, index) => (
-                  <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                      <p className="text-sm text-gray-600">{activity.employee}</p>
-                    </div>
-                    <span className="text-xs text-gray-500">{activity.time}</span>
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Recent Activities</h3>
+            </div>
+            <div className="flex flex-col gap-4">
+              {recentActivities.map((activity, index) => (
+                <div key={index} className="flex justify-between items-center" style={{ paddingBottom: '1rem', borderBottom: index < recentActivities.length - 1 ? '1px solid #e5e7eb' : 'none' }}>
+                  <div>
+                    <p style={{ fontWeight: '500', fontSize: '0.875rem', marginBottom: '0.25rem' }}>{activity.action}</p>
+                    <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>{activity.employee}</p>
                   </div>
-                ))}
-              </div>
+                  <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{activity.time}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
         {/* Welcome Message */}
-        <div className="mt-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-md p-6 text-white">
-          <h2 className="text-2xl font-bold mb-2">Welcome to EPI-USE Africa Employee Management</h2>
-          <p className="text-blue-100 mb-4">
+        <div className="card mt-8" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)', color: 'white' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>Welcome to EPI-USE Africa Employee Management</h2>
+          <p style={{ color: 'rgba(255, 255, 255, 0.9)', marginBottom: '1rem' }}>
             Efficiently manage your organization's employee hierarchy with our comprehensive cloud-based solution. 
             Create, update, and visualize your team structure with ease.
           </p>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full">✓ Employee CRUD Operations</span>
-            <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full">✓ Hierarchy Visualization</span>
-            <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full">✓ Gravatar Integration</span>
-            <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full">✓ Advanced Filtering</span>
+          <div className="flex gap-4" style={{ flexWrap: 'wrap', fontSize: '0.875rem' }}>
+            <span className="badge" style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', color: 'white' }}>✓ Employee CRUD Operations</span>
+            <span className="badge" style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', color: 'white' }}>✓ Hierarchy Visualization</span>
+            <span className="badge" style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', color: 'white' }}>✓ Gravatar Integration</span>
+            <span className="badge" style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', color: 'white' }}>✓ Advanced Filtering</span>
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 
