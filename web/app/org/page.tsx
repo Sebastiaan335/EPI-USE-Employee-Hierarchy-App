@@ -65,9 +65,11 @@ const OrgChartPage: React.FC = () => {
       layoutOptions: {
         "elk.algorithm": "layered",
         "elk.direction": "DOWN",
-        "elk.edgeRouting": "ORTHOGONAL",
+        "elk.edgeRouting": "ORTHOGONAL",       // ensures edges have bends
         "elk.layered.spacing.nodeNodeBetweenLayers": "80",
         "elk.spacing.nodeNode": "40",
+        "elk.portConstraints": "FIXED_ORDER",  // helps edge anchoring
+        "elk.edgeLabels.inline": "true",       // optional, for better labels
       },
       children: employees.map((emp) => ({
         id: emp.id.toString(),
@@ -200,7 +202,9 @@ const OrgChartPage: React.FC = () => {
                 (edge.sections || []).map((section, idx) => (
                   <polyline
                     key={edge.id + idx}
-                    points={(section.points || []).map((p: any) => `${p.x},${p.y}`).join(" ")}
+                    points={(section.points || [])
+                      .map((p: any) => `${p.x},${p.y}`)
+                      .join(" ")}
                     fill="none"
                     stroke="#dd533bff"
                     strokeWidth={2}
