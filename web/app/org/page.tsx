@@ -37,7 +37,7 @@ interface PositionedNode extends Employee {
 const OrgChartPage: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [nodes, setNodes] = useState<PositionedNode[]>([]);
-  const [edges, setEdges] = useState<{ id: string; sections: any[] }[]>([]);
+  const [edges, setEdges] = useState<{ id: string; sections?: any[] }[]>([]);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -92,12 +92,7 @@ const OrgChartPage: React.FC = () => {
           height: n.height,
         }))
       );
-      setEdges(
-        (layout.edges || []).map((edge: any) => ({
-          id: edge.id,
-          sections: edge.sections || [],
-        }))
-      );
+      setEdges(layout.edges || []);
     });
   }, [employees]);
 
@@ -177,8 +172,8 @@ const OrgChartPage: React.FC = () => {
           >
             {/* Edges */}
             <svg style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%" }}>
-              {edges.map((edge) =>
-                edge.sections.map((section, idx) => (
+              {(edges || []).map((edge) =>
+                edge.sections?.map((section, idx) => (
                   <polyline
                     key={edge.id + idx}
                     points={section.points.map((p: any) => `${p.x},${p.y}`).join(" ")}
