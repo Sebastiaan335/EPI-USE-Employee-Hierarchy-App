@@ -60,11 +60,11 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPage = 'home' }) => {
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-links">
-            <a href="#" onClick={(e) => e.preventDefault()}>About</a>
+            <a href="../../UserGuide.md" onClick={(e) => e.preventDefault()}>About</a>
             <a href="#" onClick={(e) => e.preventDefault()}>Privacy Policy</a>
             <a href="#" onClick={(e) => e.preventDefault()}>Terms of Service</a>
             <a href="#" onClick={(e) => e.preventDefault()}>Support</a>
-            <a href="#" onClick={(e) => e.preventDefault()}>Documentation</a>
+            <a href="../../README.md" onClick={(e) => e.preventDefault()}>Documentation</a>
           </div>
           
           <div className="footer-copyright">
