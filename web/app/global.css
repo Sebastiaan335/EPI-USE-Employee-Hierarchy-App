@@ -216,14 +216,15 @@ body {
 .table-container {
   background: white;
   border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   width: 100%;
+  height: 500px;          
   overflow: auto;
 }
 .table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: auto;
+  table-layout: fixed;
 }
 .table th,
 .table td {
@@ -240,7 +241,6 @@ body {
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  cursor: pointer;
   user-select: none;
 }
 .table th:hover {
@@ -249,11 +249,16 @@ body {
 .table tr:hover {
   background-color: #f9fafb;
 }
-.table .sortable {
+.table th.sortable { cursor: pointer; }
+.table th.sortable > div {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
+  gap: 0.25rem;
+}
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 /* Form styles */
