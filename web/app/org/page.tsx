@@ -200,7 +200,16 @@ const OrgChartPage: React.FC = () => {
 
             {/* Zoom controls (existing) */}
             <div className="zoom-controls">
-              ...
+              <button onClick={() => handleZoom("out")} className="btn btn-sm btn-secondary">
+                <ZoomOut size={16} />
+              </button>
+              <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
+              <button onClick={() => handleZoom("in")} className="btn btn-sm btn-secondary">
+                <ZoomIn size={16} />
+              </button>
+              <button onClick={handleReset} className="btn btn-sm btn-secondary">
+                <RotateCcw size={16} />
+              </button>
             </div>
           </div>
         </div>
