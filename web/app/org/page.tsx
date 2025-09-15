@@ -268,12 +268,12 @@ const handleUpdate = async () => {
       </div>
 
       {/* Chart + Edit Panel */}
-      <div className="flex w-full relative">
+      <div className="relative flex w-full">
         {/* Org Chart */}
         <div
           className={`transition-all duration-300 ${
-            editingEmployee ? "w-2/3" : "w-full"
-          }`}
+            editingEmployee ? "mr-96" : ""
+          } flex-1`}
         >
           <div
             className="card"
@@ -401,7 +401,7 @@ const handleUpdate = async () => {
 
         {/* Edit Side Panel */}
         {editingEmployee && (
-          <div className="w-1/3 bg-white border-l p-6 overflow-y-auto shadow-lg transition-transform duration-300">
+          <div className="fixed right-0 top-0 h-full w-96 bg-white border-l p-6 overflow-y-auto shadow-lg transition-transform duration-300">
             <h2 className="text-xl font-bold mb-4">Edit Employee</h2>
             <div className="flex flex-col gap-3">
               <input
