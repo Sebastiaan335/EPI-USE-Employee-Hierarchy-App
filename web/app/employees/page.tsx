@@ -414,67 +414,94 @@ const EmployeesPage: React.FC = () => {
           </div>
         )}
 
-        {/* Edit Employee Modal */}
         {editingEmployee && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-xl font-bold mb-4">Edit Employee</h2>
-            
-            <div className="flex flex-col gap-3">
-              <input
-                type="text"
-                name="name"
-                value={formData.name || ""}
-                onChange={handleChange}
-                placeholder="First Name"
-                className="border px-3 py-2 rounded"
-              />
-              <input
-                type="text"
-                name="surname"
-                value={formData.surname || ""}
-                onChange={handleChange}
-                placeholder="Surname"
-                className="border px-3 py-2 rounded"
-              />
-              <input
-                type="email"
-                name="email"
-                value={formData.email || ""}
-                onChange={handleChange}
-                placeholder="Email"
-                className="border px-3 py-2 rounded"
-              />
-              <input
-                type="text"
-                name="role"
-                value={formData.role || ""}
-                onChange={handleChange}
-                placeholder="Role"
-                className="border px-3 py-2 rounded"
-              />
-              <input
-                type="number"
-                name="salary"
-                value={formData.salary || ""}
-                onChange={handleChange}
-                placeholder="Salary"
-                className="border px-3 py-2 rounded"
-              />
+        <div 
+          className="fixed inset-0 flex items-center justify-center"
+          style={{ 
+            backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+            zIndex: 60 
+          }}
+        >
+          <div className="card" style={{ width: '24rem', maxWidth: '90vw', margin: '1rem' }}>
+            <div className="card-header">
+              <h2 className="card-title">Edit Employee</h2>
+              <p className="card-description">Update employee information</p>
             </div>
-
-            <div className="flex justify-end gap-3 mt-4">
+            
+            <div className="flex flex-col gap-4">
+              <div className="form-group">
+                <label className="form-label">First Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name || ""}
+                  onChange={handleChange}
+                  placeholder="Enter first name"
+                  className="form-input"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Surname</label>
+                <input
+                  type="text"
+                  name="surname"
+                  value={formData.surname || ""}
+                  onChange={handleChange}
+                  placeholder="Enter surname"
+                  className="form-input"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email || ""}
+                  onChange={handleChange}
+                  placeholder="Enter email address"
+                  className="form-input"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Role</label>
+                <input
+                  type="text"
+                  name="role"
+                  value={formData.role || ""}
+                  onChange={handleChange}
+                  placeholder="Enter job role"
+                  className="form-input"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Salary</label>
+                <input
+                  type="number"
+                  name="salary"
+                  value={formData.salary || ""}
+                  onChange={handleChange}
+                  placeholder="Enter salary amount"
+                  className="form-input"
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-6" style={{ paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
               <button
                 onClick={() => setEditingEmployee(null)}
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                className="btn btn-secondary"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdate}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="btn btn-primary"
               >
-                Save
+                Save Changes
               </button>
             </div>
           </div>
