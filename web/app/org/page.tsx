@@ -234,7 +234,7 @@ const OrgChartPage: React.FC = () => {
                       key={edge.id + idx}
                       points={pts.map((p: any) => `${p.x},${p.y}`).join(" ")}
                       fill="none"
-                      stroke="#dd533bff"
+                      stroke="#6c647dff"
                       strokeWidth={2}
                       markerEnd="url(#arrowhead)"
                     />
