@@ -209,19 +209,26 @@ const OrgChartPage: React.FC = () => {
               viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}
             >
               {edges.map((edge) =>
-                (edge.sections || []).map((section, idx) => (
-                  <polyline
-                    key={edge.id + idx}
-                    points={(section.points || [])
-                      .map((p: any) => `${p.x},${p.y}`)
-                      .join(" ")}
-                    fill="none"
-                    stroke="#dd533bff"
-                    strokeWidth={2}
-                  />
-                ))
+                (edge.sections || []).map((section, idx) => {
+                  // Build array of all coordinates
+                  const pts = [
+                    section.startPoint,
+                    ...(section.bendPoints || []),
+                    section.endPoint,
+                  ];
+                  return (
+                    <polyline
+                      key={edge.id + idx}
+                      points={pts.map((p: any) => `${p.x},${p.y}`).join(" ")}
+                      fill="none"
+                      stroke="#dd533bff"
+                      strokeWidth={2}
+                    />
+                  );
+                })
               )}
             </svg>
+
 
             {/* Nodes */}
             {nodes.map((node) => (
