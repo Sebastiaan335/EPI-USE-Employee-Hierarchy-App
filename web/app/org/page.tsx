@@ -36,6 +36,7 @@ interface PositionedNode extends Employee {
 
 const OrgChartPage: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [nodes, setNodes] = useState<PositionedNode[]>([]);
   const [edges, setEdges] = useState<{ id: string; sections?: any[] }[]>([]);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -56,6 +57,16 @@ const OrgChartPage: React.FC = () => {
   useEffect(() => {
     if (employees.length === 0) return;
 
+    const filtered = employees.filter((emp) => {
+      if (!searchTerm) return true;
+      return (
+        emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.employeenumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.role.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    });
+
     const elk = new ELK();
     const nodeWidth = 220;
     const nodeHeight = 120;
@@ -71,14 +82,14 @@ const OrgChartPage: React.FC = () => {
         "elk.portConstraints": "FIXED_ORDER",  // helps edge anchoring
         "elk.edgeLabels.inline": "true",       // optional, for better labels
       },
-      children: employees.map((emp) => ({
+      children: filtered.map((emp) => ({
         id: emp.id.toString(),
         width: nodeWidth,
         height: nodeHeight,
         emp,
       })),
-      edges: employees
-        .filter((emp) => emp.managerid)
+      edges: filtered
+        .filter((emp) => emp.managerid && filtered.some((e) => e.id === emp.managerid))
         .map((emp) => ({
           id: `${emp.managerid}-${emp.id}`,
           sources: [emp.managerid!.toString()],
@@ -108,13 +119,18 @@ const OrgChartPage: React.FC = () => {
           })),
         }))
       );
-
-      setBounds({minX: 0, minY: 0, maxX: layout.width, maxY: layout.height, width: layout.width, height: layout.height, });
-
+      setBounds({
+        minX: 0,
+        minY: 0,
+        maxX: layout.width,
+        maxY: layout.height,
+        width: layout.width,
+        height: layout.height,
+      });
       console.log("Edge[0] points:", layout.edges[0].sections[0].points);
 
     });
-  }, [employees]);
+  }, [employees, searchTerm]);
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(
@@ -166,23 +182,30 @@ const OrgChartPage: React.FC = () => {
         <div className="mb-8 flex justify-between items-center">
           <div>
             <h1 className="card-title">Organization Chart</h1>
-            <p className="card-description">
-              Visual representation of your organization's hierarchy
-            </p>
+            <p className="card-description">Visual representation of your organization's hierarchy</p>
           </div>
-          <div className="zoom-controls">
-            <button onClick={() => handleZoom("out")} className="btn btn-sm btn-secondary">
-              <ZoomOut size={16} />
-            </button>
-            <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
-            <button onClick={() => handleZoom("in")} className="btn btn-sm btn-secondary">
-              <ZoomIn size={16} />
-            </button>
-            <button onClick={handleReset} className="btn btn-sm btn-secondary">
-              <RotateCcw size={16} />
-            </button>
+
+          <div className="flex items-center gap-4">
+            {/* 🔹 Search */}
+            <div className="search-container">
+              <Search className="search-icon" size={16} />
+              <input
+                type="text"
+                placeholder="Search employees..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            </div>
+
+            {/* Zoom controls (existing) */}
+            <div className="zoom-controls">
+              ...
+            </div>
           </div>
         </div>
+
+        
 
         {/* Org Chart */}
         <div
