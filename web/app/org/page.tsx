@@ -132,6 +132,18 @@ const OrgChartPage: React.FC = () => {
     });
   }, [employees, searchTerm]);
 
+  // Recenter chart whenever search/filter changes
+  useEffect(() => {
+    if (bounds.width && bounds.height && chartRef.current) {
+      const { clientWidth, clientHeight } = chartRef.current;
+      setPan({
+        x: clientWidth / 2 - bounds.width / 2,
+        y: 50, 
+      });
+    }
+  }, [bounds, searchTerm]);
+
+
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(
       amount
@@ -149,6 +161,7 @@ const OrgChartPage: React.FC = () => {
 
   const handleReset = () => {
     setZoomLevel(1);
+    setSearchTerm("");
     if (bounds.width && bounds.height && chartRef.current) {
       const { clientWidth, clientHeight } = chartRef.current;
       setPan({
