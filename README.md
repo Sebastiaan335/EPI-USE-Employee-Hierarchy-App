@@ -1,5 +1,6 @@
 # 📘 Technical Summary — Employee Hierarchy Management App
 ### by Sebastiaan van den Berg
+* https://github.com/Sebastiaan335/EPI-USE-Employee-Hierarchy-App
 ---
 
 ## 1. Architecture of the Solution
