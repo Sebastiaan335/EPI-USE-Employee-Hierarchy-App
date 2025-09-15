@@ -194,7 +194,7 @@ const EmployeesPage: React.FC = () => {
           <table className="table" style={{ width: "100%", tableLayout: "fixed" }}>
             <thead className="sticky top-0 bg-white z-10">
               <tr>
-                <th style={{ width: "80px" }}>Profile</th>
+                <th style={{ width: "90px" }}>Profile</th>
                 <th onClick={() => handleSort("employeenumber")} className="sortable">
                   <div className="flex items-center gap-1">
                     Employee #

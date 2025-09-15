@@ -39,14 +39,12 @@ const Home: React.FC = () => {
         ).length;
         const avgSalary =
           totalEmployees > 0
-            ? Math.round(
-                data.reduce(
-                  (sum: number, e: any) =>
-                    sum + (typeof e.salary === "number" && !isNaN(e.salary) ? e.salary : 0),
-                  0
-                ) / totalEmployees
-              )
+            ? data.reduce((sum: number, e: any) => {
+                const sal = Number(e.salary);
+                return sum + (isNaN(sal) ? 0 : sal);
+              }, 0) / totalEmployees
             : 0;
+        
         setStats({ totalEmployees, totalManagers, departments: 1, avgSalary });
       });
   }, []);
@@ -84,7 +82,10 @@ const Home: React.FC = () => {
           />
           <StatCard
             title="Avg Salary"
-            value={`R${stats.avgSalary.toLocaleString()}`}
+            value={new Intl.NumberFormat("en-ZA", {
+              style: "currency",
+              currency: "ZAR",
+            }).format(stats.avgSalary)}
             icon={<BarChart3 size={24} />}
             colorClass="orange"
           />
