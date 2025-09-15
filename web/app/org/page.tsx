@@ -219,219 +219,247 @@ const handleUpdate = async () => {
   const onMouseUp = () => setIsPanning(false);
 
   return (
-    <Layout currentPage="orgchart">
-      <div className="container-wide">
-        {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="card-title">Organization Chart</h1>
-            <p className="card-description">Visual representation of your organization's hierarchy</p>
+  <Layout currentPage="orgchart">
+    <div className="container-wide">
+      {/* Header */}
+      <div className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="card-title">Organization Chart</h1>
+          <p className="card-description">
+            Visual representation of your organization's hierarchy
+          </p>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {/* 🔹 Search */}
+          <div className="search-container">
+            <Search className="search-icon" size={16} />
+            <input
+              type="text"
+              placeholder="Search employees..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* 🔹 Search */}
-            <div className="search-container">
-              <Search className="search-icon" size={16} />
-              <input
-                type="text"
-                placeholder="Search employees..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
-            </div>
-
-            {/* Zoom controls (existing) */}
-            <div className="zoom-controls">
-              <button onClick={() => handleZoom("out")} className="btn btn-sm btn-secondary">
-                <ZoomOut size={16} />
-              </button>
-              <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
-              <button onClick={() => handleZoom("in")} className="btn btn-sm btn-secondary">
-                <ZoomIn size={16} />
-              </button>
-              <button onClick={handleReset} className="btn btn-sm btn-secondary">
-                <RotateCcw size={16} />
-              </button>
-            </div>
-          </div>
-        </div>        
-
-        {/* Org Chart */}
-        <div
-          className="card"
-          style={{ position: "relative", overflow: "hidden", minHeight: "600px", cursor: isPanning ? "grabbing" : "grab" }}
-          onMouseDown={onMouseDown}
-          onMouseMove={onMouseMove}
-          onMouseUp={onMouseUp}
-          onMouseLeave={onMouseUp}
-          ref={chartRef}
-        >
-          <div
-            style={{
-              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})`,
-              transformOrigin: "top left",
-              position: "relative",
-            }}
-          >
-            {/* Edges */}
-            <svg
-              style={{ position: "absolute", left: 0, top: 0 }}
-              width={bounds.width}
-              height={bounds.height}
-              viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}
+          {/* Zoom controls */}
+          <div className="zoom-controls">
+            <button
+              onClick={() => handleZoom("out")}
+              className="btn btn-sm btn-secondary"
             >
-              <defs>
-                <marker
-                  id="arrowhead"
-                  markerWidth="10"
-                  markerHeight="7"
-                  refX="10"
-                  refY="3.5"
-                  orient="auto"
-                  markerUnits="strokeWidth"
-                >
-                  <path d="M0,0 L10,3.5 L0,7 Z" fill="#9ca3af" />
-                </marker>
-              </defs>
-
-              {edges.map((edge) =>
-                (edge.sections || []).map((section, idx) => {
-                  const pts = [
-                    section.startPoint,
-                    ...(section.bendPoints || []),
-                    section.endPoint,
-                  ];
-                  return (
-                    <polyline
-                      key={edge.id + idx}
-                      points={pts.map((p: any) => `${p.x},${p.y}`).join(" ")}
-                      fill="none"
-                      stroke="#9ca3af"
-                      strokeWidth={2}
-                      markerEnd="url(#arrowhead)"
-                    />
-                  );
-                })
-              )}
-            </svg>
-
-
-
-            {/* Nodes */}
-            {nodes.map((node) => (
-              <div
-                key={node.id}
-                className="org-node"
-                style={{
-                  position: "absolute",
-                  left: node.x,
-                  top: node.y,
-                  width: node.width,
-                  height: node.height,
-                  overflow: "hidden",
-                }}
-              >
-                <div className="org-node-header">
-                  <img
-                    className="avatar avatar-md"
-                    src={getGravatarUrl(node.email, 48)}
-                    alt={`${node.name} ${node.surname}`}
-                  />
-                  <div className="org-node-info">
-                    <h3>
-                      {node.name} {node.surname}
-                    </h3>
-                    <p>{node.employeenumber}</p>
-                    <p className="org-node-role">{node.role}</p>
-                  </div>
-                </div>
-                <div className="org-node-details">
-                  <div className="flex justify-between">
-                    <span>Salary:</span>
-                    <span style={{ fontWeight: 500 }}>{formatCurrency(node.salary)}</span>
-                  </div>
-                </div>
-                <div className="org-node-actions">
-                  <button
-                    onClick={() => {
-                      setEditingEmployee(node);
-                      setFormData(node); // prefill form
-                    }}
-                    className="btn btn-sm btn-primary"
-                  >
-                    <Edit size={12} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(node.id)}
-                    className="btn btn-sm btn-danger"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {editingEmployee && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-                <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-                  <h2 className="text-xl font-bold mb-4">Edit Employee</h2>
-                  <div className="flex flex-col gap-3">
-                    <input
-                      className="form-input"
-                      name="name"
-                      value={formData.name || ""}
-                      onChange={handleChange}
-                      placeholder="First Name"
-                    />
-                    <input
-                      className="form-input"
-                      name="surname"
-                      value={formData.surname || ""}
-                      onChange={handleChange}
-                      placeholder="Surname"
-                    />
-                    <input
-                      className="form-input"
-                      name="email"
-                      type="email"
-                      value={formData.email || ""}
-                      onChange={handleChange}
-                      placeholder="Email"
-                    />
-                    <input
-                      className="form-input"
-                      name="role"
-                      value={formData.role || ""}
-                      onChange={handleChange}
-                      placeholder="Role"
-                    />
-                    <input
-                      className="form-input"
-                      name="salary"
-                      type="number"
-                      value={formData.salary || ""}
-                      onChange={handleChange}
-                      placeholder="Salary"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-3 mt-6">
-                    <button onClick={() => setEditingEmployee(null)} className="btn btn-secondary">
-                      Cancel
-                    </button>
-                    <button onClick={handleUpdate} className="btn btn-primary">
-                      Save Changes
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
+              <ZoomOut size={16} />
+            </button>
+            <span className="zoom-level">
+              {Math.round(zoomLevel * 100)}%
+            </span>
+            <button
+              onClick={() => handleZoom("in")}
+              className="btn btn-sm btn-secondary"
+            >
+              <ZoomIn size={16} />
+            </button>
+            <button onClick={handleReset} className="btn btn-sm btn-secondary">
+              <RotateCcw size={16} />
+            </button>
           </div>
         </div>
       </div>
-    </Layout>
-  );
+
+      {/* Chart + Edit Panel */}
+      <div className="flex w-full relative">
+        {/* Org Chart */}
+        <div
+          className={`transition-all duration-300 ${
+            editingEmployee ? "w-2/3" : "w-full"
+          }`}
+        >
+          <div
+            className="card"
+            style={{
+              position: "relative",
+              overflow: "hidden",
+              minHeight: "600px",
+              cursor: isPanning ? "grabbing" : "grab",
+            }}
+            onMouseDown={onMouseDown}
+            onMouseMove={onMouseMove}
+            onMouseUp={onMouseUp}
+            onMouseLeave={onMouseUp}
+            ref={chartRef}
+          >
+            <div
+              style={{
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})`,
+                transformOrigin: "top left",
+                position: "relative",
+              }}
+            >
+              {/* Edges */}
+              <svg
+                style={{ position: "absolute", left: 0, top: 0 }}
+                width={bounds.width}
+                height={bounds.height}
+                viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}
+              >
+                <defs>
+                  <marker
+                    id="arrowhead"
+                    markerWidth="10"
+                    markerHeight="7"
+                    refX="10"
+                    refY="3.5"
+                    orient="auto"
+                    markerUnits="strokeWidth"
+                  >
+                    <path d="M0,0 L10,3.5 L0,7 Z" fill="#9ca3af" />
+                  </marker>
+                </defs>
+
+                {edges.map((edge) =>
+                  (edge.sections || []).map((section, idx) => {
+                    const pts = [
+                      section.startPoint,
+                      ...(section.bendPoints || []),
+                      section.endPoint,
+                    ];
+                    return (
+                      <polyline
+                        key={edge.id + idx}
+                        points={pts
+                          .map((p: any) => `${p.x},${p.y}`)
+                          .join(" ")}
+                        fill="none"
+                        stroke="#9ca3af"
+                        strokeWidth={2}
+                        markerEnd="url(#arrowhead)"
+                      />
+                    );
+                  })
+                )}
+              </svg>
+
+              {/* Nodes */}
+              {nodes.map((node) => (
+                <div
+                  key={node.id}
+                  className="org-node"
+                  style={{
+                    position: "absolute",
+                    left: node.x,
+                    top: node.y,
+                    width: node.width,
+                    height: node.height,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div className="org-node-header">
+                    <img
+                      className="avatar avatar-md"
+                      src={getGravatarUrl(node.email, 48)}
+                      alt={`${node.name} ${node.surname}`}
+                    />
+                    <div className="org-node-info">
+                      <h3>
+                        {node.name} {node.surname}
+                      </h3>
+                      <p>{node.employeenumber}</p>
+                      <p className="org-node-role">{node.role}</p>
+                    </div>
+                  </div>
+                  <div className="org-node-details">
+                    <div className="flex justify-between">
+                      <span>Salary:</span>
+                      <span style={{ fontWeight: 500 }}>
+                        {formatCurrency(node.salary)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="org-node-actions">
+                    <button
+                      onClick={() => {
+                        setEditingEmployee(node);
+                        setFormData(node);
+                      }}
+                      className="btn btn-sm btn-primary"
+                    >
+                      <Edit size={12} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(node.id)}
+                      className="btn btn-sm btn-danger"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Edit Side Panel */}
+        {editingEmployee && (
+          <div className="w-1/3 bg-white border-l p-6 overflow-y-auto shadow-lg transition-transform duration-300">
+            <h2 className="text-xl font-bold mb-4">Edit Employee</h2>
+            <div className="flex flex-col gap-3">
+              <input
+                className="form-input"
+                name="name"
+                value={formData.name || ""}
+                onChange={handleChange}
+                placeholder="First Name"
+              />
+              <input
+                className="form-input"
+                name="surname"
+                value={formData.surname || ""}
+                onChange={handleChange}
+                placeholder="Surname"
+              />
+              <input
+                className="form-input"
+                name="email"
+                type="email"
+                value={formData.email || ""}
+                onChange={handleChange}
+                placeholder="Email"
+              />
+              <input
+                className="form-input"
+                name="role"
+                value={formData.role || ""}
+                onChange={handleChange}
+                placeholder="Role"
+              />
+              <input
+                className="form-input"
+                name="salary"
+                type="number"
+                value={formData.salary || ""}
+                onChange={handleChange}
+                placeholder="Salary"
+              />
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setEditingEmployee(null)}
+                className="btn btn-secondary"
+              >
+                Cancel
+              </button>
+              <button onClick={handleUpdate} className="btn btn-primary">
+                Save Changes
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </Layout>
+);
+
 };
 
 export default OrgChartPage;
