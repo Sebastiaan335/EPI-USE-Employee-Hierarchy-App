@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import Layout from "../../components/layout";
 import { getGravatarUrl } from "../../lib/gravatar";
-import { useSearchParams } from "next/navigation";
 
 interface Employee {
   id: number;
@@ -38,7 +37,6 @@ const EmployeesPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState<Partial<Employee>>({});
 
-  const searchParams = useSearchParams();
   // Fetch employees from API
   const fetchEmployees = async () => {
     const res = await fetch("/api/employees", { cache: "no-store" });
@@ -52,16 +50,21 @@ const EmployeesPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const editId = searchParams.get("edit");
-    if (editId && employees.length > 0) {
-      const emp = employees.find((e) => e.id === Number(editId));
-      if (emp) {
-        setEditingEmployee(emp);
-        setFormData(emp);
-        setSearchTerm(`${emp.name} ${emp.surname}`); // optional: filter
-      }
+  if (typeof window === "undefined") return;
+
+  const params = new URLSearchParams(window.location.search);
+  const editId = params.get("edit");
+
+  if (editId && employees.length > 0) {
+    const emp = employees.find((e) => e.id === Number(editId));
+    if (emp) {
+      setEditingEmployee(emp);
+      setFormData(emp);
+      setSearchTerm(emp.name);
     }
-  }, [searchParams, employees]);
+  }
+}, [employees]);
+
 
 
   // Delete employee

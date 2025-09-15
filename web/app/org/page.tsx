@@ -14,7 +14,6 @@ import {
 import Layout from "../../components/layout";
 import { getGravatarUrl } from "../../lib/gravatar";
 import ELK from "elkjs";
-import { useRouter } from "next/navigation";
 
 interface Employee {
   id: number;
@@ -47,7 +46,6 @@ const OrgChartPage: React.FC = () => {
   const [bounds, setBounds] = useState({ minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0 });
 
   const chartRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   useEffect(() => {
     fetch("/api/employees")
@@ -326,7 +324,7 @@ const OrgChartPage: React.FC = () => {
                 </div>
                 <div className="org-node-actions">
                   <button
-                    onClick={() => router.push(`/employees?edit=${node.id}`)}
+                    // onClick={() => router.push(`/employees?edit=${node.id}`)}
                     className="btn btn-sm btn-primary"
                   >
                     <Edit size={12} />
