@@ -195,19 +195,19 @@ const EmployeesPage: React.FC = () => {
             <thead className="sticky top-0 bg-white z-10">
               <tr>
                 <th style={{ width: "80px" }}>Profile</th>
-                <th onClick={() => handleSort("employeenumber")} className="sortable" style={{ width: "110px" }}>
+                <th onClick={() => handleSort("employeenumber")} className="sortable">
                   <div className="flex items-center gap-1">
                     Employee #
                     <SortIcon field="employeenumber" />
                   </div>
                 </th>
-                <th onClick={() => handleSort("name")} className="sortable" style={{ width: "200px" }}>
+                <th onClick={() => handleSort("name")} className="sortable">
                   <div className="flex items-center gap-1">
                     Name
                     <SortIcon field="name" />
                   </div>
                 </th>
-                <th onClick={() => handleSort("role")} className="sortable" style={{ width: "110px" }}>
+                <th onClick={() => handleSort("role")} className="sortable">
                   <div className="flex items-center gap-1">
                     Role
                     <SortIcon field="role" />

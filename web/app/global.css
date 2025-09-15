@@ -265,6 +265,32 @@ body {
   top: 0;
   z-index: 1;
 }
+/* Employee # column */
+.table td:nth-child(2),
+.table th:nth-child(2) {
+  width: 120px;       /* smaller, fixed width */
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Name column */
+.table td:nth-child(3),
+.table th:nth-child(3) {
+  width: 300px;       /* give it more room */
+  max-width: 300px;
+  word-break: break-word;
+}
+
+/* Role column */
+.table td:nth-child(4),
+.table th:nth-child(4) {
+  width: 150px;       /* narrower again */
+  max-width: 150px;
+  word-break: break-word;
+}
+
 
 /* Form styles */
 .form-group {
