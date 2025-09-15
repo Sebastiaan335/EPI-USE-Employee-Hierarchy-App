@@ -247,109 +247,6 @@ const EmployeesPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Employee Table */}
-        <div className="table-container" style={{ maxHeight: "500px", overflowY: "auto" }}>
-          <table className="table" style={{ width: "100%", tableLayout: "fixed" }}>
-            <thead className="sticky top-0 bg-white z-10">
-              <tr>
-                <th style={{ width: "90px" }}>Profile</th>
-                <th onClick={() => handleSort("employeenumber")} className="sortable">
-                  <div className="flex items-center gap-1">
-                    Employee #
-                    <SortIcon field="employeenumber" />
-                  </div>
-                </th>
-                <th onClick={() => handleSort("name")} className="sortable">
-                  <div className="flex items-center gap-1">
-                    Name
-                    <SortIcon field="name" />
-                  </div>
-                </th>
-                <th onClick={() => handleSort("role")} className="sortable">
-                  <div className="flex items-center gap-1">
-                    Role
-                    <SortIcon field="role" />
-                  </div>
-                </th>
-                <th onClick={() => handleSort("salary")} className="sortable">
-                  <div className="flex items-center gap-1">
-                    Salary
-                    <SortIcon field="salary" />
-                  </div>
-                </th>
-                <th onClick={() => handleSort("birthdate")} className="sortable">
-                  <div className="flex items-center gap-1">
-                    Birth Date
-                    <SortIcon field="birthdate" />
-                  </div>
-                </th>
-                <th>Manager</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAndSortedEmployees.map((employee) => (
-                <tr key={employee.id}>
-                  <td>
-                    <img
-                      className="avatar avatar-sm"
-                      src={getGravatarUrl(employee.email, 40)}
-                      alt={`${employee.name} ${employee.surname}`}
-                    />
-                  </td>
-                  <td>
-                    <strong>{employee.employeenumber}</strong>
-                  </td>
-                  <td>
-                    <div>
-                      <div style={{ fontWeight: 500 }}>
-                        {employee.name} {employee.surname}
-                      </div>
-                      <div className="text-sm text-gray-500">{employee.email}</div>
-                    </div>
-                  </td>
-                  <td>
-                    <span className="badge badge-blue">{employee.role}</span>
-                  </td>
-                  <td>{formatCurrency(employee.salary)}</td>
-                  <td>{formatDate(employee.birthdate)}</td>
-                  <td>{getManagerName(employee.managerid)}</td>
-                  <td>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEditClick(employee)}
-                        className="btn btn-sm btn-primary"
-                      >
-                        <Edit size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(employee.id)}
-                        className="btn btn-sm btn-danger"
-                        title="Delete Employee"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* {Filter and Sort} */}
-        {filteredAndSortedEmployees.length === 0 && (
-          <div className="empty-state">
-            <User className="empty-state-icon" />
-            <h3>No employees found</h3>
-            <p>
-              {searchTerm || filterRole
-                ? "Try adjusting your search or filter criteria."
-                : "Get started by adding a new employee."}
-            </p>
-          </div>
-        )}       
-
         {/* Edit Employee Modal */}
         {editingEmployee && (
           <div 
@@ -535,6 +432,109 @@ const EmployeesPage: React.FC = () => {
             </div>
           </div>
         )} 
+
+        {/* Employee Table */}
+        <div className="table-container" style={{ maxHeight: "500px", overflowY: "auto" }}>
+          <table className="table" style={{ width: "100%", tableLayout: "fixed" }}>
+            <thead className="sticky top-0 bg-white z-10">
+              <tr>
+                <th style={{ width: "90px" }}>Profile</th>
+                <th onClick={() => handleSort("employeenumber")} className="sortable">
+                  <div className="flex items-center gap-1">
+                    Employee #
+                    <SortIcon field="employeenumber" />
+                  </div>
+                </th>
+                <th onClick={() => handleSort("name")} className="sortable">
+                  <div className="flex items-center gap-1">
+                    Name
+                    <SortIcon field="name" />
+                  </div>
+                </th>
+                <th onClick={() => handleSort("role")} className="sortable">
+                  <div className="flex items-center gap-1">
+                    Role
+                    <SortIcon field="role" />
+                  </div>
+                </th>
+                <th onClick={() => handleSort("salary")} className="sortable">
+                  <div className="flex items-center gap-1">
+                    Salary
+                    <SortIcon field="salary" />
+                  </div>
+                </th>
+                <th onClick={() => handleSort("birthdate")} className="sortable">
+                  <div className="flex items-center gap-1">
+                    Birth Date
+                    <SortIcon field="birthdate" />
+                  </div>
+                </th>
+                <th>Manager</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAndSortedEmployees.map((employee) => (
+                <tr key={employee.id}>
+                  <td>
+                    <img
+                      className="avatar avatar-sm"
+                      src={getGravatarUrl(employee.email, 40)}
+                      alt={`${employee.name} ${employee.surname}`}
+                    />
+                  </td>
+                  <td>
+                    <strong>{employee.employeenumber}</strong>
+                  </td>
+                  <td>
+                    <div>
+                      <div style={{ fontWeight: 500 }}>
+                        {employee.name} {employee.surname}
+                      </div>
+                      <div className="text-sm text-gray-500">{employee.email}</div>
+                    </div>
+                  </td>
+                  <td>
+                    <span className="badge badge-blue">{employee.role}</span>
+                  </td>
+                  <td>{formatCurrency(employee.salary)}</td>
+                  <td>{formatDate(employee.birthdate)}</td>
+                  <td>{getManagerName(employee.managerid)}</td>
+                  <td>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditClick(employee)}
+                        className="btn btn-sm btn-primary"
+                      >
+                        <Edit size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(employee.id)}
+                        className="btn btn-sm btn-danger"
+                        title="Delete Employee"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* {Filter and Sort} */}
+        {filteredAndSortedEmployees.length === 0 && (
+          <div className="empty-state">
+            <User className="empty-state-icon" />
+            <h3>No employees found</h3>
+            <p>
+              {searchTerm || filterRole
+                ? "Try adjusting your search or filter criteria."
+                : "Get started by adding a new employee."}
+            </p>
+          </div>
+        )}       
 
       </div>
     </Layout>
