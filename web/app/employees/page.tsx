@@ -292,7 +292,7 @@ const EmployeesPage: React.FC = () => {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleEditClick(employee)}
-                        className="text-indigo-600 hover:text-indigo-900"
+                        className="btn btn-sm btn-primary"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
@@ -418,7 +418,7 @@ const EmployeesPage: React.FC = () => {
         <div 
           className="fixed inset-0 flex items-center justify-center"
           style={{ 
-            backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+            backgroundColor: '#f9fafb', 
             zIndex: 60 
           }}
         >
