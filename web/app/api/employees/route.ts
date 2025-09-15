@@ -10,7 +10,7 @@ export async function GET(req: Request) {
     try {
     const employee = await prisma.employees.findUnique({
       where: { id: Number(id) },
-      // include: { manager: true },
+      include: { manager: true },
     });
     if (!employee) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(employee);
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   // otherwise: list all employees
   try {
     const employees = await prisma.employees.findMany({
-      // include: { manager: true },
+      include: { manager: true },
     });
     return NextResponse.json(employees);
   } catch (err) {
