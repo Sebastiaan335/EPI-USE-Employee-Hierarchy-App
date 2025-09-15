@@ -58,7 +58,7 @@ const OrgChartPage: React.FC = () => {
 
     const elk = new ELK();
     const nodeWidth = 220;
-    const nodeHeight = 100;
+    const nodeHeight = 120;
 
     const graph = {
       id: "root",
@@ -208,9 +208,22 @@ const OrgChartPage: React.FC = () => {
               height={bounds.height}
               viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}
             >
+              <defs>
+                <marker
+                  id="arrowhead"
+                  markerWidth="10"
+                  markerHeight="7"
+                  refX="10"
+                  refY="3.5"
+                  orient="auto"
+                  markerUnits="strokeWidth"
+                >
+                  <path d="M0,0 L10,3.5 L0,7 Z" fill="#dd533bff" />
+                </marker>
+              </defs>
+
               {edges.map((edge) =>
                 (edge.sections || []).map((section, idx) => {
-                  // Build array of all coordinates
                   const pts = [
                     section.startPoint,
                     ...(section.bendPoints || []),
@@ -223,11 +236,13 @@ const OrgChartPage: React.FC = () => {
                       fill="none"
                       stroke="#dd533bff"
                       strokeWidth={2}
+                      markerEnd="url(#arrowhead)"
                     />
                   );
                 })
               )}
             </svg>
+
 
 
             {/* Nodes */}
@@ -241,6 +256,7 @@ const OrgChartPage: React.FC = () => {
                   top: node.y,
                   width: node.width,
                   height: node.height,
+                  overflow: "hidden",
                 }}
               >
                 <div className="org-node-header">
