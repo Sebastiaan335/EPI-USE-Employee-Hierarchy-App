@@ -10,7 +10,7 @@ export async function GET(req: Request) {
     try {
     const employee = await prisma.employees.findUnique({
       where: { id: Number(id) },
-      include: { manager: true },
+      // include: { manager: true },
     });
     if (!employee) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(employee);
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   // otherwise: list all employees
   try {
     const employees = await prisma.employees.findMany({
-      include: { manager: true },
+      // include: { manager: true },
     });
     return NextResponse.json(employees);
   } catch (err) {
@@ -44,13 +44,36 @@ export async function PUT(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const id = Number(searchParams.get("id"));
-    const data = await req.json();
-    const updated = await prisma.employees.update({where: { id }, data });
+    const body = await req.json();
+
+    // Remove id (and any relation objects you don’t want to update directly)
+    const { id: _, manager, other_employees, ...data } = body;
+
+    // Convert salary to number (if string from form)
+    if (data.salary) {
+      data.salary = Number(data.salary);
+    }
+
+    // Convert birthdate if string
+    if (data.birthdate) {
+      data.birthdate = new Date(data.birthdate);
+    }
+
+    const updated = await prisma.employees.update({
+      where: { id },
+      data,
+    });
+
     return NextResponse.json(updated);
-  } catch {
-    return NextResponse.json({ error: 'Failed to update employee' }, { status: 500 });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json(
+      { error: "Failed to update employee" },
+      { status: 500 }
+    );
   }
 }
+
 
 export async function DELETE(req: Request) {
   try {

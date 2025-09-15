@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 import Layout from "../../components/layout";
 import { getGravatarUrl } from "../../lib/gravatar";
+import { useSearchParams } from "next/navigation";
 
 interface Employee {
   id: number;
@@ -36,17 +38,36 @@ const EmployeesPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState<Partial<Employee>>({});
 
+  const searchParams = useSearchParams();
   // Fetch employees from API
+  const fetchEmployees = async () => {
+    const res = await fetch("/api/employees", { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch employees");
+    const data = await res.json();
+    setEmployees(data);
+  };
+
   useEffect(() => {
-    fetch("/api/employees")
-      .then((res) => res.json())
-      .then(setEmployees);
+    fetchEmployees();
   }, []);
+
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (editId && employees.length > 0) {
+      const emp = employees.find((e) => e.id === Number(editId));
+      if (emp) {
+        setEditingEmployee(emp);
+        setFormData(emp);
+        setSearchTerm(`${emp.name} ${emp.surname}`); // optional: filter
+      }
+    }
+  }, [searchParams, employees]);
+
 
   // Delete employee
   const handleDelete = async (id: number) => {
     await fetch(`/api/employees?id=${id}`, { method: "DELETE" });
-    setEmployees((prev) => prev.filter((e) => e.id !== id));
+    await fetchEmployees();
   };
 
   const handleEditClick = (employee: Employee) => {
@@ -74,7 +95,8 @@ const EmployeesPage: React.FC = () => {
       // Refresh employees after update
       const updated = await res.json();
       console.log("Updated:", updated);
-      
+      await fetchEmployees();
+
       setEditingEmployee(null);
     } else {
       alert("Failed to update employee");
@@ -101,8 +123,9 @@ const EmployeesPage: React.FC = () => {
         alert("Failed to add employee: " + errText);
         return;
       }
-      const newEmp = await res.json();
-      setEmployees((prev) => [...prev, newEmp]);
+      await fetchEmployees();
+      // const newEmp = await res.json();
+      // setEmployees((prev) => [...prev, newEmp]);
       setShowAddModal(false);
       setFormData({});
     } catch (err) {
@@ -294,7 +317,7 @@ const EmployeesPage: React.FC = () => {
                         onClick={() => handleEditClick(employee)}
                         className="btn btn-sm btn-primary"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit size={14} />
                       </button>
                       <button
                         onClick={() => handleDelete(employee.id)}
@@ -311,6 +334,7 @@ const EmployeesPage: React.FC = () => {
           </table>
         </div>
 
+        {/* {Filter and Sort} */}
         {filteredAndSortedEmployees.length === 0 && (
           <div className="empty-state">
             <User className="empty-state-icon" />
@@ -320,6 +344,101 @@ const EmployeesPage: React.FC = () => {
                 ? "Try adjusting your search or filter criteria."
                 : "Get started by adding a new employee."}
             </p>
+          </div>
+        )}       
+
+        {/* Edit Employee Modal */}
+        {editingEmployee && (
+          <div 
+            className="fixed inset-0 flex items-center justify-center"
+            style={{ 
+              backgroundColor: '#f9fafb', 
+              zIndex: 60 
+            }}
+          >
+            <div className="card" style={{ width: '24rem', maxWidth: '90vw', margin: '1rem' }}>
+              <div className="card-header">
+                <h2 className="card-title">Edit Employee</h2>
+                <p className="card-description">Update employee information</p>
+              </div>
+              
+              <div className="flex flex-col gap-4">
+                <div className="form-group">
+                  <label className="form-label">First Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name || ""}
+                    onChange={handleChange}
+                    placeholder="Enter first name"
+                    className="form-input"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Surname</label>
+                  <input
+                    type="text"
+                    name="surname"
+                    value={formData.surname || ""}
+                    onChange={handleChange}
+                    placeholder="Enter surname"
+                    className="form-input"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email || ""}
+                    onChange={handleChange}
+                    placeholder="Enter email address"
+                    className="form-input"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Role</label>
+                  <input
+                    type="text"
+                    name="role"
+                    value={formData.role || ""}
+                    onChange={handleChange}
+                    placeholder="Enter job role"
+                    className="form-input"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Salary</label>
+                  <input
+                    type="number"
+                    name="salary"
+                    value={formData.salary || ""}
+                    onChange={handleChange}
+                    placeholder="Enter salary amount"
+                    className="form-input"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6" style={{ paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+                <button
+                  onClick={() => setEditingEmployee(null)}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdate}
+                  className="btn btn-primary"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -412,101 +531,7 @@ const EmployeesPage: React.FC = () => {
               </div>
             </div>
           </div>
-        )}
-
-        {editingEmployee && (
-        <div 
-          className="fixed inset-0 flex items-center justify-center"
-          style={{ 
-            backgroundColor: '#f9fafb', 
-            zIndex: 60 
-          }}
-        >
-          <div className="card" style={{ width: '24rem', maxWidth: '90vw', margin: '1rem' }}>
-            <div className="card-header">
-              <h2 className="card-title">Edit Employee</h2>
-              <p className="card-description">Update employee information</p>
-            </div>
-            
-            <div className="flex flex-col gap-4">
-              <div className="form-group">
-                <label className="form-label">First Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name || ""}
-                  onChange={handleChange}
-                  placeholder="Enter first name"
-                  className="form-input"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label className="form-label">Surname</label>
-                <input
-                  type="text"
-                  name="surname"
-                  value={formData.surname || ""}
-                  onChange={handleChange}
-                  placeholder="Enter surname"
-                  className="form-input"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label className="form-label">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email || ""}
-                  onChange={handleChange}
-                  placeholder="Enter email address"
-                  className="form-input"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label className="form-label">Role</label>
-                <input
-                  type="text"
-                  name="role"
-                  value={formData.role || ""}
-                  onChange={handleChange}
-                  placeholder="Enter job role"
-                  className="form-input"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label className="form-label">Salary</label>
-                <input
-                  type="number"
-                  name="salary"
-                  value={formData.salary || ""}
-                  onChange={handleChange}
-                  placeholder="Enter salary amount"
-                  className="form-input"
-                />
-              </div>
-            </div>
-            
-            <div className="flex justify-end gap-3 mt-6" style={{ paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
-              <button
-                onClick={() => setEditingEmployee(null)}
-                className="btn btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdate}
-                className="btn btn-primary"
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        )} 
 
       </div>
     </Layout>
