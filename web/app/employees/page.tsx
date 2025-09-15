@@ -49,6 +49,38 @@ const EmployeesPage: React.FC = () => {
     setEmployees((prev) => prev.filter((e) => e.id !== id));
   };
 
+  const handleEditClick = (employee: Employee) => {
+    setEditingEmployee(employee);
+    setFormData(employee); // prefill form
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleUpdate = async () => {
+  if (!editingEmployee) return;
+
+  const res = await fetch(`/api/employees?id=${editingEmployee.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+
+    if (res.ok) {
+      // Refresh employees after update
+      const updated = await res.json();
+      console.log("Updated:", updated);
+      
+      setEditingEmployee(null);
+    } else {
+      alert("Failed to update employee");
+    }
+  };
+
   // Handle add
   const handleAdd = async () => {
     try {
@@ -259,11 +291,10 @@ const EmployeesPage: React.FC = () => {
                   <td>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setEditingEmployee(employee)}
-                        className="btn btn-sm btn-secondary"
-                        title="Edit Employee"
+                        onClick={() => handleEditClick(employee)}
+                        className="text-indigo-600 hover:text-indigo-900"
                       >
-                        <Edit size={14} />
+                        <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(employee.id)}
@@ -382,6 +413,74 @@ const EmployeesPage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Edit Employee Modal */}
+        {editingEmployee && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-xl font-bold mb-4">Edit Employee</h2>
+            
+            <div className="flex flex-col gap-3">
+              <input
+                type="text"
+                name="name"
+                value={formData.name || ""}
+                onChange={handleChange}
+                placeholder="First Name"
+                className="border px-3 py-2 rounded"
+              />
+              <input
+                type="text"
+                name="surname"
+                value={formData.surname || ""}
+                onChange={handleChange}
+                placeholder="Surname"
+                className="border px-3 py-2 rounded"
+              />
+              <input
+                type="email"
+                name="email"
+                value={formData.email || ""}
+                onChange={handleChange}
+                placeholder="Email"
+                className="border px-3 py-2 rounded"
+              />
+              <input
+                type="text"
+                name="role"
+                value={formData.role || ""}
+                onChange={handleChange}
+                placeholder="Role"
+                className="border px-3 py-2 rounded"
+              />
+              <input
+                type="number"
+                name="salary"
+                value={formData.salary || ""}
+                onChange={handleChange}
+                placeholder="Salary"
+                className="border px-3 py-2 rounded"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={() => setEditingEmployee(null)}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdate}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       </div>
     </Layout>
   );
