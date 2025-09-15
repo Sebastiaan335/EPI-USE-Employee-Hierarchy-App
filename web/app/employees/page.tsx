@@ -190,11 +190,11 @@ const EmployeesPage: React.FC = () => {
         </div>
 
         {/* Employee Table */}
-        <div className="table-container">
-          <table className="table">
-            <thead>
+        <div className="table-container" style={{ maxHeight: "500px", overflowY: "auto" }}>
+          <table className="table" style={{ width: "100%", tableLayout: "fixed" }}>
+            <thead className="sticky top-0 bg-white z-10">
               <tr>
-                <th>Profile</th>
+                <th style={{ width: "80px" }}>Profile</th>
                 <th onClick={() => handleSort("employeenumber")} className="sortable">
                   <div className="flex items-center gap-1">
                     Employee #
