@@ -122,7 +122,7 @@ const OrgChartPage: React.FC = () => {
     );
 
   const handleDelete = async (id: number) => {
-    await fetch(`/api/employees/${id}`, { method: "DELETE" });
+    await fetch(`/api/employees?id=${id}`, { method: "DELETE" });
     setEmployees((prev) => prev.filter((e) => e.id !== id));
   };
 
@@ -218,7 +218,7 @@ const OrgChartPage: React.FC = () => {
                   orient="auto"
                   markerUnits="strokeWidth"
                 >
-                  <path d="M0,0 L10,3.5 L0,7 Z" fill="#dd533bff" />
+                  <path d="M0,0 L10,3.5 L0,7 Z" fill="#9ca3af" />
                 </marker>
               </defs>
 
@@ -234,7 +234,7 @@ const OrgChartPage: React.FC = () => {
                       key={edge.id + idx}
                       points={pts.map((p: any) => `${p.x},${p.y}`).join(" ")}
                       fill="none"
-                      stroke="#6c647dff"
+                      stroke="#9ca3af"
                       strokeWidth={2}
                       markerEnd="url(#arrowhead)"
                     />

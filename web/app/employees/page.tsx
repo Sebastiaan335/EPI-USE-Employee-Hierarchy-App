@@ -45,7 +45,7 @@ const EmployeesPage: React.FC = () => {
 
   // Delete employee
   const handleDelete = async (id: number) => {
-    await fetch(`/api/employees/${id}`, { method: "DELETE" });
+    await fetch(`/api/employees?id=${id}`, { method: "DELETE" });
     setEmployees((prev) => prev.filter((e) => e.id !== id));
   };
 
