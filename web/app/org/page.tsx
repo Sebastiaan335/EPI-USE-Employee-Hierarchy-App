@@ -39,6 +39,8 @@ const OrgChartPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [nodes, setNodes] = useState<PositionedNode[]>([]);
   const [edges, setEdges] = useState<{ id: string; sections?: any[] }[]>([]);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [formData, setFormData] = useState<Partial<Employee>>({});
   const [zoomLevel, setZoomLevel] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -148,6 +150,34 @@ const OrgChartPage: React.FC = () => {
     new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(
       amount
     );
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  setFormData({
+    ...formData,
+    [e.target.name]: e.target.value,
+  });
+};
+
+const handleUpdate = async () => {
+  if (!editingEmployee) return;
+
+  const res = await fetch(`/api/employees?id=${editingEmployee.id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(formData),
+  });
+
+  if (res.ok) {
+    const updated = await res.json();
+    setEmployees((prev) =>
+      prev.map((emp) => (emp.id === updated.id ? updated : emp))
+    );
+    setEditingEmployee(null);
+  } else {
+    alert("Failed to update employee");
+  }
+};
+
 
   const handleDelete = async (id: number) => {
     await fetch(`/api/employees?id=${id}`, { method: "DELETE" });
@@ -324,7 +354,10 @@ const OrgChartPage: React.FC = () => {
                 </div>
                 <div className="org-node-actions">
                   <button
-                    // onClick={() => router.push(`/employees?edit=${node.id}`)}
+                    onClick={() => {
+                      setEditingEmployee(node);
+                      setFormData(node); // prefill form
+                    }}
                     className="btn btn-sm btn-primary"
                   >
                     <Edit size={12} />
@@ -338,6 +371,62 @@ const OrgChartPage: React.FC = () => {
                 </div>
               </div>
             ))}
+
+            {editingEmployee && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+                <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+                  <h2 className="text-xl font-bold mb-4">Edit Employee</h2>
+                  <div className="flex flex-col gap-3">
+                    <input
+                      className="form-input"
+                      name="name"
+                      value={formData.name || ""}
+                      onChange={handleChange}
+                      placeholder="First Name"
+                    />
+                    <input
+                      className="form-input"
+                      name="surname"
+                      value={formData.surname || ""}
+                      onChange={handleChange}
+                      placeholder="Surname"
+                    />
+                    <input
+                      className="form-input"
+                      name="email"
+                      type="email"
+                      value={formData.email || ""}
+                      onChange={handleChange}
+                      placeholder="Email"
+                    />
+                    <input
+                      className="form-input"
+                      name="role"
+                      value={formData.role || ""}
+                      onChange={handleChange}
+                      placeholder="Role"
+                    />
+                    <input
+                      className="form-input"
+                      name="salary"
+                      type="number"
+                      value={formData.salary || ""}
+                      onChange={handleChange}
+                      placeholder="Salary"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-3 mt-6">
+                    <button onClick={() => setEditingEmployee(null)} className="btn btn-secondary">
+                      Cancel
+                    </button>
+                    <button onClick={handleUpdate} className="btn btn-primary">
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       </div>
