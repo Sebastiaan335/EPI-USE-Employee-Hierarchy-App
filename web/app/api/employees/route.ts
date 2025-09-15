@@ -32,13 +32,37 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const data = await req.json();
+    const raw = await req.json();
+
+    // Drop id if it exists
+    const { id, ...rest } = raw;
+
+    // Normalize types (birthdate, salary, managerid)
+    const data = {
+      ...rest,
+      birthdate: rest.birthdate ? new Date(rest.birthdate) : null,
+      salary: rest.salary ? rest.salary.toString() : null,
+      managerid: rest.managerid ? Number(rest.managerid) : null,
+    };
+
     const newEmployee = await prisma.employees.create({ data });
     return NextResponse.json(newEmployee, { status: 201 });
-  } catch (err) {
-    return NextResponse.json({ error: 'Failed to create employee' }, { status: 500 });
+  } catch (err: any) {
+    if (err.code === "P2002") {
+      return NextResponse.json(
+        { error: `Unique constraint failed on ${err.meta?.target?.join(", ")}` },
+        { status: 409 }
+      );
+    }
+    console.error("Error creating employee:", err);
+    return NextResponse.json(
+      { error: "Failed to create employee" },
+      { status: 500 }
+    );
   }
 }
+
+
 
 export async function PUT(req: Request) {
   try {

@@ -108,34 +108,38 @@ const EmployeesPage: React.FC = () => {
 
   // Handle add
   const handleAdd = async () => {
-    try {
-      const payload = {
-        ...formData,
-        // Ensure correct ISO format
-        birthdate: formData.birthdate
-          ? new Date(formData.birthdate).toISOString() : null,
-      };
+  try {
+    const { id, ...cleanForm } = formData; // remove id if present
 
-      const res = await fetch("/api/employees", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const errText = await res.text();
-        alert("Failed to add employee: " + errText);
-        return;
-      }
-      await fetchEmployees();
-      // const newEmp = await res.json();
-      // setEmployees((prev) => [...prev, newEmp]);
-      setShowAddModal(false);
-      setFormData({});
-    } catch (err) {
-      console.error(err);
-      alert("Error adding employee");
+    const payload = {
+      ...cleanForm,
+      birthdate: cleanForm.birthdate
+        ? new Date(cleanForm.birthdate).toISOString()
+        : null,
+      salary: cleanForm.salary ? cleanForm.salary.toString() : null,
+    };
+
+    const res = await fetch("/api/employees", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert("Failed to add employee: " + (err.error || res.statusText));
+      return;
     }
-  };
+
+    await fetchEmployees();
+    setShowAddModal(false);
+    setFormData({});
+  } catch (err) {
+    console.error(err);
+    alert("Error adding employee");
+  }
+};
+
 
   const getManagerName = (managerid?: number | null) => {
     if (!managerid) return "No Manager";
@@ -206,7 +210,7 @@ const EmployeesPage: React.FC = () => {
               Manage your organization's employee data
             </p>
           </div>
-          <button onClick={() => setShowAddModal(true)} className="btn btn-primary">
+          <button onClick={() => {setFormData({}); setShowAddModal(true);}} className="btn btn-primary">
             <Plus size={16} />
             Add Employee
           </button>
