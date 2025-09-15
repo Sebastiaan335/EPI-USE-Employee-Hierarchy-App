@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model employees {
+  id              Int         @id @default(autoincrement())
+  name            String      @db.VarChar(100)
+  surname         String      @db.VarChar(100)
+  birthdate       DateTime    @db.Date
+  employeenumber  String      @unique @db.VarChar(50)
+  email           String      @unique @db.VarChar(255)
+  salary          Decimal     @db.Decimal(12, 2)
+  role            String      @db.VarChar(100)
+  managerid       Int?
+  manager       employees?  @relation("employeesToemployees", fields: [managerid], references: [id], onUpdate: NoAction, map: "fk_manager")
+  other_employees employees[] @relation("employeesToemployees")
+
+  @@index([employeenumber], map: "idx_employees_employee_number")
+  @@index([managerid], map: "idx_employees_manager_id")
+}

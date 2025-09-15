@@ -1,283 +1,442 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import ReactFlow, {
-  Background,
-  Controls,
-  MiniMap,
-  Node,
-  Edge,
-  useNodesState,
-  useEdgesState,
-} from "reactflow";
-import "reactflow/dist/style.css";
-import dagre from "dagre";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Search,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Edit,
+  Trash2,
+  User,
+  Building2,
+} from "lucide-react";
+import Layout from "../../components/layout";
+import { getGravatarUrl } from "../../lib/gravatar";
+import ELK from "elkjs";
 
-type ApiNode = { id: string; label: string; role?: string };
-type ApiEdge = { id: string; source: string; target: string };
-
-type Employee = {
+interface Employee {
   id: number;
+  employeenumber: string;
   name: string;
   surname: string;
+  birthdate: string;
+  salary: number;
   role: string;
-  managerId: number | null;
-};
-
-const nodeWidth = 220;
-const nodeHeight = 72;
-
-function layout(nodes: Node[], edges: Edge[]) {
-  const g = new dagre.graphlib.Graph();
-  g.setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: "TB", nodesep: 40, ranksep: 80 });
-
-  nodes.forEach((n) => g.setNode(n.id, { width: nodeWidth, height: nodeHeight }));
-  edges.forEach((e) => g.setEdge(e.source, e.target));
-
-  dagre.layout(g);
-
-  nodes.forEach((n) => {
-    const pos = g.node(n.id);
-    n.position = { x: pos.x - nodeWidth / 2, y: pos.y - nodeHeight / 2 };
-  });
-
-  return { nodes, edges };
+  managerid?: number | null;
+  email: string;
 }
 
-export default function OrgPage() {
-  const [raw, setRaw] = useState<{ nodes: ApiNode[]; edges: ApiEdge[] } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<Partial<Employee>>({});
+interface PositionedNode extends Employee {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
+const OrgChartPage: React.FC = () => {
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [nodes, setNodes] = useState<PositionedNode[]>([]);
+  const [edges, setEdges] = useState<{ id: string; sections?: any[] }[]>([]);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [formData, setFormData] = useState<Partial<Employee>>({});
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const lastPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [bounds, setBounds] = useState({ minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0 });
 
-  const fetchGraph = useCallback(() => {
-    setError(null);
-    fetch("/api/org")
-      .then(async (r) => {
-        if (!r.ok) {
-          const j = await r.json().catch(() => ({}));
-          throw new Error(j?.error || "Failed to load org");
-        }
-        return r.json();
-      })
-      .then((j) => setRaw(j))
-      .catch((e) => setError(e.message));
+  const chartRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch("/api/employees")
+      .then((res) => res.json())
+      .then(setEmployees);
   }, []);
 
+  // Compute layout with ELK
   useEffect(() => {
-    fetchGraph();
-  }, [fetchGraph]);
+    if (employees.length === 0) return;
 
-  // Build RF nodes/edges
-  useEffect(() => {
-    if (!raw) return;
-    const rfNodes: Node[] = raw.nodes.map((n) => ({
-      id: n.id,
-      data: { label: n.label, role: n.role },
-      position: { x: 0, y: 0 },
-      style: {
+    const filtered = employees.filter((emp) => {
+      if (!searchTerm) return true;
+      return (
+        emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.employeenumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.role.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    });
+
+    const elk = new ELK();
+    const nodeWidth = 220;
+    const nodeHeight = 120;
+
+    const graph = {
+      id: "root",
+      layoutOptions: {
+        "elk.algorithm": "layered",
+        "elk.direction": "DOWN",
+        "elk.edgeRouting": "ORTHOGONAL",       // ensures edges have bends
+        "elk.layered.spacing.nodeNodeBetweenLayers": "80",
+        "elk.spacing.nodeNode": "40",
+        "elk.portConstraints": "FIXED_ORDER",  // helps edge anchoring
+        "elk.edgeLabels.inline": "true",       // optional, for better labels
+      },
+      children: filtered.map((emp) => ({
+        id: emp.id.toString(),
         width: nodeWidth,
         height: nodeHeight,
-        borderRadius: 12,
-        border: "1px solid #e5e7eb",
-        padding: 8,
-        background: "white",
-        boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
-      },
-    }));
+        emp,
+      })),
+      edges: filtered
+        .filter((emp) => emp.managerid && filtered.some((e) => e.id === emp.managerid))
+        .map((emp) => ({
+          id: `${emp.managerid}-${emp.id}`,
+          sources: [emp.managerid!.toString()],
+          targets: [emp.id.toString()],
+        })),
+    };
 
-    const rfEdges: Edge[] = raw.edges.map((e) => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      animated: false,
-    }));
+    elk.layout(graph).then((layout: any) => {
+      console.log("ELK layout", layout);
 
-    const { nodes: laidNodes, edges: laidEdges } = layout(rfNodes, rfEdges);
-    setNodes(laidNodes);
-    setEdges(laidEdges);
-  }, [raw, setNodes, setEdges]);
+      setNodes(
+        (layout.children || []).map((n: any) => ({
+          ...(n.emp as Employee),
+          x: n.x,
+          y: n.y,
+          width: n.width,
+          height: n.height,
+        }))
+      );
+      setEdges(
+        (layout.edges || []).map((edge: any) => ({
+          id: edge.id,
+          sections: (edge.sections || []).map((s: any) => ({
+            startPoint: s.startPoint,
+            endPoint: s.endPoint,
+            bendPoints: s.bendPoints || [],
+          })),
+        }))
+      );
+      setBounds({
+        minX: 0,
+        minY: 0,
+        maxX: layout.width,
+        maxY: layout.height,
+        width: layout.width,
+        height: layout.height,
+      });
+      console.log("Edge[0] points:", layout.edges[0].sections[0].points);
 
-interface OnNodeClickParams {
-    event: React.MouseEvent;
-    node: Node;
-}
-
-interface EditData extends Partial<Employee> {}
-
-const onNodeClick = useCallback(
-    (_: React.MouseEvent, node: Node): void => {
-        setSelectedId(node.id);
-        // prime edit form with current values (best-effort fetch)
-        fetch(`/api/employees/${node.id}`)
-            .then((r) => r.json())
-            .then((emp: Employee) =>
-                setEditData({
-                    id: emp.id,
-                    name: emp.name,
-                    surname: emp.surname,
-                    role: emp.role,
-                    managerId: emp.managerId,
-                } as EditData)
-            )
-            .catch(() => {
-                setEditData({ id: Number(node.id) } as EditData);
-            });
-    },
-    []
-);
-
-  const closeDialog = () => {
-    setSelectedId(null);
-    setEditData({});
-  };
-
-  const onDelete = async () => {
-    if (!selectedId) return;
-    if (!confirm("Delete this employee?")) return;
-    const res = await fetch(`/api/employees/${selectedId}`, { method: "DELETE" });
-    if (!res.ok) {
-      alert("Failed to delete.");
-      return;
-    }
-    closeDialog();
-    fetchGraph();
-  };
-
-  const onSave = async () => {
-    if (!editData?.id) return;
-    const res = await fetch(`/api/employees/${editData.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: editData.name,
-        surname: editData.surname,
-        role: editData.role,
-        managerId: editData.managerId ?? null,
-      }),
     });
-    if (!res.ok) {
-      alert("Failed to save changes.");
-      return;
+  }, [employees, searchTerm]);
+
+  // Recenter chart whenever search/filter changes
+  useEffect(() => {
+    if (bounds.width && bounds.height && chartRef.current) {
+      const { clientWidth, clientHeight } = chartRef.current;
+      setPan({
+        x: clientWidth / 2 - bounds.width / 2,
+        y: 50, 
+      });
     }
-    closeDialog();
-    fetchGraph();
+  }, [bounds, searchTerm]);
+
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR" }).format(
+      amount
+    );
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  setFormData({
+    ...formData,
+    [e.target.name]: e.target.value,
+  });
+};
+
+const handleUpdate = async () => {
+  if (!editingEmployee) return;
+
+  const res = await fetch(`/api/employees?id=${editingEmployee.id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(formData),
+  });
+
+  if (res.ok) {
+    const updated = await res.json();
+    setEmployees((prev) =>
+      prev.map((emp) => (emp.id === updated.id ? updated : emp))
+    );
+    setEditingEmployee(null);
+  } else {
+    alert("Failed to update employee");
+  }
+};
+
+
+  const handleDelete = async (id: number) => {
+    await fetch(`/api/employees?id=${id}`, { method: "DELETE" });
+    setEmployees((prev) => prev.filter((e) => e.id !== id));
   };
 
-  const selectedNode = useMemo(
-    () => nodes.find((n) => n.id === selectedId) as Node<{ label: string; role?: string }> | undefined,
-    [nodes, selectedId]
-  );
+  const handleZoom = (direction: "in" | "out" | "reset") => {
+    if (direction === "in") setZoomLevel((z) => Math.min(z * 1.2, 3));
+    if (direction === "out") setZoomLevel((z) => Math.max(z / 1.2, 0.5));
+  };
+
+  const handleReset = () => {
+    setZoomLevel(1);
+    setSearchTerm("");
+    if (bounds.width && bounds.height && chartRef.current) {
+      const { clientWidth, clientHeight } = chartRef.current;
+      setPan({
+        x: clientWidth / 2 - bounds.width / 2,
+        y: 50, // some padding from top
+      });
+    } else {
+      setPan({ x: 0, y: 0 });
+    }
+  };
+
+
+  // Panning handlers
+  const onMouseDown = (e: React.MouseEvent) => {
+    setIsPanning(true);
+    lastPos.current = { x: e.clientX, y: e.clientY };
+  };
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isPanning) return;
+    const dx = e.clientX - lastPos.current.x;
+    const dy = e.clientY - lastPos.current.y;
+    setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+    lastPos.current = { x: e.clientX, y: e.clientY };
+  };
+  const onMouseUp = () => setIsPanning(false);
 
   return (
-    <div className="p-4 h-[calc(100vh-64px)]">
-      <div className="flex items-center gap-3 mb-3">
-        <h1 className="text-2xl font-bold">Organisation Chart</h1>
-        <button
-          onClick={fetchGraph}
-          className="rounded-md border px-3 py-1 text-sm hover:bg-gray-50"
-        >
-          Refresh
-        </button>
-        {error && <span className="text-red-600 text-sm">{error}</span>}
-      </div>
+    <Layout currentPage="orgchart">
+      <div className="container-wide">
+        {/* Header */}
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="card-title">Organization Chart</h1>
+            <p className="card-description">Visual representation of your organization's hierarchy</p>
+          </div>
 
-      <div className="h-full border rounded-lg">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onNodeClick={onNodeClick}
-          fitView
-        >
-          <MiniMap />
-          <Controls />
-          <Background />
-        </ReactFlow>
-      </div>
-
-      {/* Simple dialog for node actions */}
-      {selectedNode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-lg bg-white p-4 shadow-lg">
-            <div className="mb-2">
-              <h2 className="text-lg font-semibold">Edit Employee</h2>
-              <p className="text-sm text-gray-500">
-                {selectedNode.data?.label} {selectedNode.data?.role ? `— ${selectedNode.data?.role}` : ""}
-              </p>
+          <div className="flex items-center gap-4">
+            {/* 🔹 Search */}
+            <div className="search-container">
+              <Search className="search-icon" size={16} />
+              <input
+                type="text"
+                placeholder="Search employees..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <label className="text-sm">
-                <span className="block text-gray-600">Name</span>
-                <input
-                  className="mt-1 w-full rounded-md border px-2 py-1"
-                  value={editData.name ?? ""}
-                  onChange={(e) => setEditData((d) => ({ ...d, name: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm">
-                <span className="block text-gray-600">Surname</span>
-                <input
-                  className="mt-1 w-full rounded-md border px-2 py-1"
-                  value={editData.surname ?? ""}
-                  onChange={(e) => setEditData((d) => ({ ...d, surname: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm col-span-2">
-                <span className="block text-gray-600">Role</span>
-                <input
-                  className="mt-1 w-full rounded-md border px-2 py-1"
-                  value={editData.role ?? ""}
-                  onChange={(e) => setEditData((d) => ({ ...d, role: e.target.value }))}
-                />
-              </label>
-              <label className="text-sm col-span-2">
-                <span className="block text-gray-600">Manager ID</span>
-                <input
-                  type="number"
-                  className="mt-1 w-full rounded-md border px-2 py-1"
-                  value={editData.managerId ?? ""}
-                  onChange={(e) =>
-                    setEditData((d) => ({
-                      ...d,
-                      managerId: e.target.value === "" ? null : Number(e.target.value),
-                    }))
-                  }
-                />
-              </label>
-            </div>
-
-            <div className="mt-4 flex justify-between">
-              <button
-                onClick={onDelete}
-                className="rounded-md border border-red-300 bg-red-50 px-3 py-1 text-sm text-red-700 hover:bg-red-100"
-              >
-                Delete
+            {/* Zoom controls (existing) */}
+            <div className="zoom-controls">
+              <button onClick={() => handleZoom("out")} className="btn btn-sm btn-secondary">
+                <ZoomOut size={16} />
               </button>
-              <div className="space-x-2">
-                <button
-                  onClick={closeDialog}
-                  className="rounded-md border px-3 py-1 text-sm hover:bg-gray-50"
-                >
+              <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
+              <button onClick={() => handleZoom("in")} className="btn btn-sm btn-secondary">
+                <ZoomIn size={16} />
+              </button>
+              <button onClick={handleReset} className="btn btn-sm btn-secondary">
+                <RotateCcw size={16} />
+              </button>
+            </div>
+          </div>
+        </div>    
+
+        {editingEmployee && (
+          <div 
+            className="absolute top-0 left-0 right-0 flex items-center justify-center bg-black/50 z-40"
+            style={{ minHeight: "300px" }}
+          >
+            <div className="bg-white rounded-lg p-4 w-[30rem] shadow-lg mx-auto">
+              <h2 className="text-lg font-semibold mb-2">Edit Employee</h2>
+
+              <div className="flex flex-col gap-2">
+                <input
+                  className="form-input"
+                  name="name"
+                  value={formData.name || ""}
+                  onChange={handleChange}
+                  placeholder="First Name"
+                />
+                <input
+                  className="form-input"
+                  name="surname"
+                  value={formData.surname || ""}
+                  onChange={handleChange}
+                  placeholder="Surname"
+                />
+                <input
+                  className="form-input"
+                  name="email"
+                  type="email"
+                  value={formData.email || ""}
+                  onChange={handleChange}
+                  placeholder="Email"
+                />
+                <input
+                  className="form-input"
+                  name="role"
+                  value={formData.role || ""}
+                  onChange={handleChange}
+                  placeholder="Role"
+                />
+                <input
+                  className="form-input"
+                  name="salary"
+                  type="number"
+                  value={formData.salary || ""}
+                  onChange={handleChange}
+                  placeholder="Salary"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-gray-200">
+                <button onClick={() => setEditingEmployee(null)} className="btn btn-secondary btn-sm">
                   Cancel
                 </button>
-                <button
-                  onClick={onSave}
-                  className="rounded-md bg-black px-3 py-1 text-sm text-white hover:bg-gray-800"
-                >
+                <button onClick={handleUpdate} className="btn btn-primary btn-sm">
                   Save
                 </button>
               </div>
             </div>
           </div>
+        )}
+    
+
+        {/* Org Chart */}
+        <div
+          className="card"
+          style={{ position: "relative", overflow: "hidden", minHeight: "600px", cursor: isPanning ? "grabbing" : "grab" }}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseUp}
+          ref={chartRef}
+        >
+          <div
+            style={{
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})`,
+              transformOrigin: "top left",
+              position: "relative",
+            }}
+          >
+            {/* Edges */}
+            <svg
+              style={{ position: "absolute", left: 0, top: 0 }}
+              width={bounds.width}
+              height={bounds.height}
+              viewBox={`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`}
+            >
+              <defs>
+                <marker
+                  id="arrowhead"
+                  markerWidth="10"
+                  markerHeight="7"
+                  refX="10"
+                  refY="3.5"
+                  orient="auto"
+                  markerUnits="strokeWidth"
+                >
+                  <path d="M0,0 L10,3.5 L0,7 Z" fill="#9ca3af" />
+                </marker>
+              </defs>
+
+              {edges.map((edge) =>
+                (edge.sections || []).map((section, idx) => {
+                  const pts = [
+                    section.startPoint,
+                    ...(section.bendPoints || []),
+                    section.endPoint,
+                  ];
+                  return (
+                    <polyline
+                      key={edge.id + idx}
+                      points={pts.map((p: any) => `${p.x},${p.y}`).join(" ")}
+                      fill="none"
+                      stroke="#9ca3af"
+                      strokeWidth={2}
+                      markerEnd="url(#arrowhead)"
+                    />
+                  );
+                })
+              )}
+            </svg>
+
+
+
+            {/* Nodes */}
+            {nodes.map((node) => (
+              <div
+                key={node.id}
+                className="org-node"
+                style={{
+                  position: "absolute",
+                  left: node.x,
+                  top: node.y,
+                  width: node.width,
+                  height: node.height,
+                  overflow: "hidden",
+                }}
+              >
+                <div className="org-node-header">
+                  <img
+                    className="avatar avatar-md"
+                    src={getGravatarUrl(node.email, 48)}
+                    alt={`${node.name} ${node.surname}`}
+                  />
+                  <div className="org-node-info">
+                    <h3>
+                      {node.name} {node.surname}
+                    </h3>
+                    <p>{node.employeenumber}</p>
+                    <p className="org-node-role">{node.role}</p>
+                  </div>
+                </div>
+                <div className="org-node-details">
+                  <div className="flex justify-between">
+                    <span>Salary:</span>
+                    <span style={{ fontWeight: 500 }}>{formatCurrency(node.salary)}</span>
+                  </div>
+                </div>
+                <div className="org-node-actions">
+                  <button
+                    onClick={() => {
+                      setEditingEmployee(node);
+                      setFormData(node); // prefill form
+                    }}
+                    className="btn btn-sm btn-primary"
+                  >
+                    <Edit size={12} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(node.id)}
+                    className="btn btn-sm btn-danger"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      )}
-    </div>
+      </div>
+    </Layout>
   );
-}
+};
+
+export default OrgChartPage;

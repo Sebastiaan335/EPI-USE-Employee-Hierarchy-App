@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+export const dynamic = "force-dynamic";
 
-type OrgNode = { id: string; label: string; role?: string };
-type OrgEdge = { id: string; source: string; target: string };
+type OrgNode = { id: number; label: string; role?: string };
+type OrgEdge = { id: number; source: number; target: number };
 
 export async function GET() {
   try {
-    const employees = await prisma.employee.findMany({
-      select: { id: true, firstName: true, lastName: true, role: true, managerId: true },
+    const employees = await prisma.employees.findMany({
+      select: { id: true, name: true, surname: true, role: true, managerid: true },
       orderBy: { id: "asc" },
     });
 
@@ -16,9 +17,9 @@ export async function GET() {
     const ids = new Set<string>();
     for (const e of employees) {
       ids.add(String(e.id));
-      if (e.managerId != null) {
-        if (!adj.has(String(e.managerId))) adj.set(String(e.managerId), []);
-        adj.get(String(e.managerId))!.push(String(e.id));
+      if (e.managerid != null) {
+        if (!adj.has(String(e.managerid))) adj.set(String(e.managerid), []);
+        adj.get(String(e.managerid))!.push(String(e.id));
       }
       if (!adj.has(String(e.id))) adj.set(String(e.id), []);
     }
@@ -77,32 +78,32 @@ export async function GET() {
     // Build React Flow nodes/edges (positions will be computed client-side)
     interface Employee {
       id: string | number;
-      firstName: string;
-      lastName: string;
+      name: string;
+      surname: string;
       role?: string | null;
-      managerId?: string | number | null;
+      managerid?: string | number | null;
     }
 
     const nodes: OrgNode[] = employees.map((e: Employee): OrgNode => ({
-      id: String(e.id),
-      label: `${e.firstName} ${e.lastName}`,
+      id: Number(e.id),
+      label: `${e.name} ${e.surname}`,
       role: e.role ?? undefined,
     }));
 
     interface EmployeeWithManager {
       id: string | number;
-      firstName: string;
-      lastName: string;
+      name: string;
+      surname: string;
       role?: string | null;
-      managerId?: string | number | null;
+      managerid?: string | number | null;
     }
 
     const edges: OrgEdge[] = (employees as EmployeeWithManager[])
-      .filter((e: EmployeeWithManager) => e.managerId != null)
+      .filter((e: EmployeeWithManager) => e.managerid != null)
       .map((e: EmployeeWithManager): OrgEdge => ({
-      id: `${e.managerId}-${e.id}`,
-      source: String(e.managerId),
-      target: String(e.id),
+      id: Number(e.managerid),
+      source: Number(e.managerid),
+      target: Number(e.id),
       }));
 
     return NextResponse.json({ nodes, edges });
