@@ -32,36 +32,50 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const raw = await req.json();
+    const body = await req.json();
 
-    // Drop id if it exists
-    const { id, ...rest } = raw;
+    // Destructure body (you can validate with Zod here if you want stricter checks)
+    const {
+      name,
+      surname,
+      birthdate,
+      employeenumber,
+      email,
+      salary,
+      role,
+      managerid,
+    } = body;
 
-    // Normalize types (birthdate, salary, managerid)
-    const data = {
-      ...rest,
-      birthdate: rest.birthdate ? new Date(rest.birthdate) : null,
-      salary: rest.salary ? rest.salary.toString() : null,
-      managerid: rest.managerid ? Number(rest.managerid) : null,
-    };
-
-    const newEmployee = await prisma.employees.create({ data });
-    return NextResponse.json(newEmployee, { status: 201 });
-  } catch (err: any) {
-    if (err.code === "P2002") {
+    // Prevent self-manager case
+    if (managerid && body.id && managerid === body.id) {
       return NextResponse.json(
-        { error: `Unique constraint failed on ${err.meta?.target?.join(", ")}` },
-        { status: 409 }
+        { error: "An employee cannot be their own manager." },
+        { status: 400 }
       );
     }
+
+    const employee = await prisma.employees.create({
+      data: {
+        name,
+        surname,
+        birthdate: new Date(birthdate),
+        employeenumber,
+        email,
+        salary,
+        role,
+        managerid: managerid ?? null,
+      },
+    });
+
+    return NextResponse.json(employee, { status: 201 });
+  } catch (err: any) {
     console.error("Error creating employee:", err);
     return NextResponse.json(
-      { error: "Failed to create employee" },
+      { error: "Failed to create employee", details: err.message },
       { status: 500 }
     );
   }
 }
-
 
 
 export async function PUT(req: Request) {

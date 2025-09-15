@@ -108,37 +108,39 @@ const EmployeesPage: React.FC = () => {
 
   // Handle add
   const handleAdd = async () => {
-  try {
-    const { id, ...cleanForm } = formData; // remove id if present
+    try {
+      // Explicitly strip id before sending
+      const { id, ...cleanForm } = formData;
 
-    const payload = {
-      ...cleanForm,
-      birthdate: cleanForm.birthdate
-        ? new Date(cleanForm.birthdate).toISOString()
-        : null,
-      salary: cleanForm.salary ? cleanForm.salary.toString() : null,
-    };
+      const payload = {
+        ...cleanForm,
+        birthdate: cleanForm.birthdate
+          ? new Date(cleanForm.birthdate).toISOString()
+          : null,
+        salary: cleanForm.salary ? cleanForm.salary.toString() : null,
+      };
 
-    const res = await fetch("/api/employees", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+      const res = await fetch("/api/employees", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      alert("Failed to add employee: " + (err.error || res.statusText));
-      return;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert("Failed to add employee: " + (err.error || res.statusText));
+        return;
+      }
+
+      await fetchEmployees();
+      setShowAddModal(false);
+      setFormData({});
+    } catch (err) {
+      console.error(err);
+      alert("Error adding employee");
     }
+  };
 
-    await fetchEmployees();
-    setShowAddModal(false);
-    setFormData({});
-  } catch (err) {
-    console.error(err);
-    alert("Error adding employee");
-  }
-};
 
 
   const getManagerName = (managerid?: number | null) => {
@@ -210,7 +212,13 @@ const EmployeesPage: React.FC = () => {
               Manage your organization's employee data
             </p>
           </div>
-          <button onClick={() => {setFormData({}); setShowAddModal(true);}} className="btn btn-primary">
+          <button
+            onClick={() => {
+              setFormData({});   // clear id + any stale data
+              setShowAddModal(true);
+            }}
+            className="btn btn-primary"
+          >
             <Plus size={16} />
             Add Employee
           </button>
